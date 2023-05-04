@@ -1,8 +1,5 @@
 Dbms: mysql
-ConnectionStrings:
-  - mysql: server=${MYSQL_IP};port=3306;uid={MYSQL_UID};pwd={MYSQL_PWD}
-ASPNETCORE_URLS: http://0.0.0.0:${LISTER_PORT}
 MYSQL_IP: localhost
-MYSQL_UID: root
-MYSQL_PWD: 1234
+MYSQL_UID: mcsdbg
+MYSQL_PWD: MyWceQc-cFgPynao
 LISTER_PORT: 80

@@ -4,6 +4,7 @@ namespace SvcService.Data;
 
 public class ServiceDbContext : DbContext
 {
+    public ServiceDbContext(DbContextOptions<ServiceDbContext> options) : base(options){}
     public DbSet<ServiceEntity> Services { get; set; }
     public DbSet<InterfaceEntity> Interfaces { get; set; }
 
