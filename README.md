@@ -30,6 +30,8 @@ docker build -t <img>:<tag> .
 
 建库脚本位于`svc-service.sql`, 可以使用`dotnet ef migrations script -o svc-service.sql`来导出建库脚本。**然而，建库是自动完成的。**
 
+数据库名称为`svcservice`，可以在`appsettings.json`的连接字符串里修改
+
 ### ServiceEntity
 
 字段和长度/精度说明如下：
