@@ -55,6 +55,7 @@ docker build -t <img>:<tag> .
 
 ## 目录结构
 
+```text
 ├─📂Data EF Core实体模型定义
 ├─📂Migrations 迁移, EFCore自动生成
 ├─📂Properties
@@ -70,3 +71,4 @@ docker build -t <img>:<tag> .
 ├─🗒️SvcService.csproj 项目文件(自动生成)，包含**依赖项**
 ├─🗒️SvcService.sln 解决方案文件(自动生成)
 └─🗒️svc-service.sql 建库脚本
+```
