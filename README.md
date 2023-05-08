@@ -38,7 +38,8 @@ docker build -t <img>:<tag> .
 
 |字段|长度/精度|备注|
 |:---:|:---:|:---:|
-|Id|32||
+|Id|32|PK|
+|Name|32|IX|
 |Repo|128||
 |VersionMajor/Minor|16||
 |VersionPatch|32||
@@ -68,6 +69,7 @@ docker build -t <img>:<tag> .
 ├─🗒️appsettings.json 基本配置文件
 ├─🗒️appsettings.Development.json 基本配置文件(dev)
 ├─🗒️Dockerfile (自动生成)
+├─🗒️MResponse.cs MResponse
 ├─🗒️Program.cs 程序入口（最小API），包含**请求处理、Bean定义和依赖注入**
 ├─🗒️README.md 本文件
 ├─🗒️SvcService.csproj 项目文件(自动生成)，包含**依赖项**
