@@ -13,6 +13,8 @@ public class ServiceEntity
     public string Name { get; set; }
     [MaxLength(128), Required]
     public string Repo{ get; set; }
+    [MaxLength(256), Required]
+    public string ImageUrl { get; set; }
     public bool HasVersion { get; set; }
     [NotMapped] public Version? Version
     {

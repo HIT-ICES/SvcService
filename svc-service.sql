@@ -43,3 +43,76 @@ VALUES ('20230504032049_init', '7.0.5');
 
 COMMIT;
 
+START TRANSACTION;
+
+ALTER TABLE `Services` ADD `Name` varchar(32) CHARACTER SET utf8mb4 NOT NULL DEFAULT '';
+
+CREATE INDEX `IX_Services_Name` ON `Services` (`Name`);
+
+INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+VALUES ('20230507120625_AddServiceName', '7.0.5');
+
+COMMIT;
+
+START TRANSACTION;
+
+UPDATE `Services` SET `VersionPatch` = ''
+WHERE `VersionPatch` IS NULL;
+SELECT ROW_COUNT();
+
+
+ALTER TABLE `Services` MODIFY COLUMN `VersionPatch` varchar(32) CHARACTER SET utf8mb4 NOT NULL;
+
+UPDATE `Services` SET `VersionMinor` = ''
+WHERE `VersionMinor` IS NULL;
+SELECT ROW_COUNT();
+
+
+ALTER TABLE `Services` MODIFY COLUMN `VersionMinor` varchar(16) CHARACTER SET utf8mb4 NOT NULL;
+
+UPDATE `Services` SET `VersionMajor` = ''
+WHERE `VersionMajor` IS NULL;
+SELECT ROW_COUNT();
+
+
+ALTER TABLE `Services` MODIFY COLUMN `VersionMajor` varchar(16) CHARACTER SET utf8mb4 NOT NULL;
+
+ALTER TABLE `Services` MODIFY COLUMN `IdleRam` decimal(16,4) NOT NULL DEFAULT 0.0;
+
+ALTER TABLE `Services` MODIFY COLUMN `IdleGpuMem` decimal(16,4) NOT NULL DEFAULT 0.0;
+
+ALTER TABLE `Services` MODIFY COLUMN `IdleGpuCore` decimal(16,4) NOT NULL DEFAULT 0.0;
+
+ALTER TABLE `Services` MODIFY COLUMN `IdleDisk` decimal(16,4) NOT NULL DEFAULT 0.0;
+
+ALTER TABLE `Services` MODIFY COLUMN `IdleCpu` decimal(16,4) NOT NULL DEFAULT 0.0;
+
+ALTER TABLE `Services` MODIFY COLUMN `DesiredCpu` decimal(65,30) NOT NULL;
+
+ALTER TABLE `Services` ADD `HasIdleResource` tinyint(1) NOT NULL DEFAULT FALSE;
+
+ALTER TABLE `Services` ADD `HasVersion` tinyint(1) NOT NULL DEFAULT FALSE;
+
+INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+VALUES ('20230508042542_hasPropInsteadOfNullable', '7.0.5');
+
+COMMIT;
+
+START TRANSACTION;
+
+INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+VALUES ('20230508045228_fixDesiredCpuPrecision', '7.0.5');
+
+COMMIT;
+
+START TRANSACTION;
+
+ALTER TABLE `Services` MODIFY COLUMN `DesiredCpu` decimal(16,4) NOT NULL;
+
+ALTER TABLE `Services` ADD `ImageUrl` varchar(256) CHARACTER SET utf8mb4 NOT NULL DEFAULT '';
+
+INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+VALUES ('20230515051450_addImageUrlforServiceEntity', '7.0.5');
+
+COMMIT;
+

@@ -41,6 +41,7 @@ docker build -t <img>:<tag> .
 |Id|32|PK|
 |Name|32|IX|
 |Repo|128||
+|ImageUrl|256||
 |VersionMajor/Minor|16||
 |VersionPatch|32||
 |Res|decimal(16,4)|任一资源|

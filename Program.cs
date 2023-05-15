@@ -137,7 +137,7 @@ namespace SvcService
 
     public record Resource(decimal Cpu, decimal Ram, decimal Disk, decimal GpuCore, decimal GpuMem);
 
-    public record Service(string Id, string Name, string Repo, Version? Version, List<Interface> Interfaces,
+    public record Service(string Id, string Name, string Repo, string ImageUrl,Version? Version, List<Interface> Interfaces,
         Resource? IdleResource,
         Resource DesiredResource, int DesiredCapability)
     {
@@ -147,6 +147,7 @@ namespace SvcService
             entity.Name = Name;
             entity.DesiredCapability = DesiredCapability;
             entity.Repo = Repo;
+            entity.ImageUrl = ImageUrl;
             entity.Version = Version;
             entity.DesiredResource = DesiredResource;
             entity.IdleResource = IdleResource;
@@ -158,6 +159,7 @@ namespace SvcService
                 entity.Id,
                 entity.Name,
                 entity.Repo,
+                entity.ImageUrl,
                 entity.Version,
                 entity.Interfaces.Select(Interface.FromEntity).ToList(),
                 entity.IdleResource,
