@@ -45,12 +45,10 @@ using (var dbEnsureScope = app.Services.CreateScope())
 
 }
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
 
 app.MapPost("/service/add", async ([FromBody] Service service, [FromServices] ServiceDbContext db) =>
 {
@@ -84,7 +82,7 @@ app.MapPost("service/getById", async ([FromBody] ByIdBean bean, [FromServices] S
         .Include(s => s.Interfaces)
         .FirstOrDefaultAsync(s => s.Id == bean.ServiceId);
     return entity is null ?
-            Ok(MResponse.Failed($"Service with Id {bean.ServiceId} not found") ):
+            Ok(MResponse.Failed($"Service with Id {bean.ServiceId} not found")) :
             Ok(MResponse.Successful(Service.FromEntity(entity)));
 }).WithName("GetServiceById").WithOpenApi();
 
@@ -137,7 +135,7 @@ namespace SvcService
 
     public record Resource(decimal Cpu, decimal Ram, decimal Disk, decimal GpuCore, decimal GpuMem);
 
-    public record Service(string Id, string Name, string Repo, string ImageUrl,Version? Version, List<Interface> Interfaces,
+    public record Service(string Id, string Name, string Repo, string ImageUrl, Version? Version, List<Interface> Interfaces,
         Resource? IdleResource,
         Resource DesiredResource, int DesiredCapability)
     {
