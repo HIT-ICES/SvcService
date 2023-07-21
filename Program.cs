@@ -1,8 +1,5 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Steeltoe.Extensions.Configuration.Placeholder;
 using SvcService;
 using SvcService.Data;
@@ -12,11 +9,7 @@ using static Microsoft.AspNetCore.Http.Results;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration
-    .AddYamlFile("application.yaml", false, true)
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-    .AddPlaceholderResolver()
-    ;
+builder.Configuration.AddPlaceholderResolver();
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

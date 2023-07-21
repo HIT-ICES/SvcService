@@ -29,10 +29,4 @@
     <Folder Include="TestData\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="application.yaml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
