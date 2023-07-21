@@ -18,11 +18,11 @@ builder.Services.AddSwaggerGen();
 
 var connectionString = builder.Configuration.GetConnectionString(builder.Configuration["Dbms"] ?? "mysql");
 
-Console.WriteLine($"Connection String: {connectionString}");
-foreach (var key in new[] { "MYSQL_UID", "MYSQL_IP", "MYSQL_PWD" })
-{
-    Console.WriteLine($"ENV:{key}={Environment.GetEnvironmentVariable(key)}");
-}
+//Console.WriteLine($"Connection String: {connectionString}");
+//foreach (var key in new[] { "MYSQL_UID", "MYSQL_IP", "MYSQL_PWD" })
+//{
+//    Console.WriteLine($"ENV:{key}={Environment.GetEnvironmentVariable(key)}");
+//}
 
 
 
