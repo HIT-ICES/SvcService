@@ -1,5 +1,5 @@
 IMAGE_NAME = svc-service
-IMAGE_TAG = 0.1.4
+IMAGE_TAG = 0.1.5
 DOCKERFILE_DIR = .
 WORK_DIR = .
 REPO_NAME = 192.168.1.104:5000/cloud-collaboration-platform
