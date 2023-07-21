@@ -13,10 +13,8 @@ using static Microsoft.AspNetCore.Http.Results;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration
-
     .AddYamlFile("application.yaml", false, true)
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-    .AddEnvironmentVariables()
     .AddPlaceholderResolver()
     ;
 
