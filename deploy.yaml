@@ -69,14 +69,14 @@ spec:
         app: svc-service # change this to the desired label if needed
     spec:
       containers:
-        - image: 192.168.1.104:5000/cloud-collaboration-platform/svc-service:0.1.1 # change this to the desired image if needed
+        - image: 192.168.1.104:5000/cloud-collaboration-platform/svc-service:0.1.2 # change this to the desired image if needed
           name: svc-service # change this to the desired name if needed
           env:
             - name: MSQL_UID
               value: root
             - name: MYSQL_IP
               value: svc-service-mysql
-            - name: MYSQL_ROOT_PASSWORD 
+            - name: MYSQL_PWD
               valueFrom:
                 secretKeyRef:
                   name: svc-service-mysql-secret # reference the secret created above, change this to the desired name if needed 
