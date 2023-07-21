@@ -36,7 +36,7 @@ spec:
           name: svc-service-mysql # change this to the desired name if needed
           env:
             # Use secret in real usage, see https://kubernetes.io/docs/concepts/configuration/secret/\
-            - name: MYSQL_PWD
+            - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: svc-service-mysql-secret # reference the secret created above, change this to the desired name if needed 
