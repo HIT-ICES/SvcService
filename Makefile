@@ -26,7 +26,7 @@ K8S_REPLICA = 1
 default:
 	$(DOCKER) build -f $(DOCKERFILE_DIR)/Dockerfile -t $(IMAGE_NAME):$(IMAGE_TAG) $(WORK_DIR)
 
-install:
+install: publish
 	$(K8S) apply -f deploy.yaml
 
 restart:
@@ -44,14 +44,11 @@ logs:
 uninstall:
 	$(K8S) delete -f deploy.yaml
 
-tag:
+tag: build
 	$(DOCKER) tag $(IMAGE_NAME):$(IMAGE_TAG) $(REPO_NAME)/$(IMAGE_NAME):$(IMAGE_TAG)
 
 publish: tag
 	$(DOCKER) push $(REPO_NAME)/$(IMAGE_NAME):$(IMAGE_TAG)
-
-sh:
-	$(DOCKER) run $(RUN_OPTIONS) -tid --restart=on-failure --name $(SH_APP_NAME) --entrypoint=/bin/sh $(IMAGE_NAME):$(IMAGE_TAG)
 
 status:
 	$(DOCKER) ps -a | grep $(IMAGE_NAME)
