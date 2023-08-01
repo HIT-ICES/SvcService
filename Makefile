@@ -18,7 +18,7 @@ else
 RUN_OPTIONS = $(DEFAULT_RUN_OPTIONS)
 endif
 
-K8S = kubectl
+K8S = kubectl -n cloud-collaboration-platform
 K8S_REPLICA = 1
 
 .PHONY: default install restart start stop logs uninstall deploy sh status
