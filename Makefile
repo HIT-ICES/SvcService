@@ -1,5 +1,5 @@
 IMAGE_NAME = svc-service
-IMAGE_TAG = 0.1.6
+IMAGE_TAG = 0.1.7
 DOCKERFILE_DIR = .
 WORK_DIR = .
 REPO_NAME = 192.168.1.104:5000/cloud-collaboration-platform
@@ -18,7 +18,8 @@ else
 RUN_OPTIONS = $(DEFAULT_RUN_OPTIONS)
 endif
 
-
+K8S = kubectl
+K8S_REPLICA = 1
 
 .PHONY: default install restart start stop logs uninstall deploy sh status
 
@@ -26,22 +27,22 @@ default:
 	$(DOCKER) build -f $(DOCKERFILE_DIR)/Dockerfile -t $(IMAGE_NAME):$(IMAGE_TAG) $(WORK_DIR)
 
 install:
-	$(DOCKER) run $(RUN_OPTIONS) -tid --restart=on-failure --name $(APP_NAME) $(IMAGE_NAME):$(IMAGE_TAG)
+	$(K8S) apply -f deploy.yaml
 
 restart:
-	$(DOCKER) restart $(APP_NAME)
+	$(K8S) delete pod -f -l 'app=$(APP_NAME)'
 
 start:
-	$(DOCKER) start $(APP_NAME)
+	$(K8S) scale deployment -l 'app=$(APP_NAME)' --replicas=$(K8S_REPLICA)
 
 stop:
-	$(DOCKER) stop $(APP_NAME)
+	$(K8S) scale deployment -l 'app=$(APP_NAME)' --replicas=0
 
 logs:
-	$(DOCKER) logs -f $(APP_NAME)
+	$(K8S) logs -f -l 'app=$(APP_NAME)'
 
 uninstall:
-	$(DOCKER) rm -f $(APP_NAME)
+	$(K8S) delete -f deploy.yaml
 
 tag:
 	$(DOCKER) tag $(IMAGE_NAME):$(IMAGE_TAG) $(REPO_NAME)/$(IMAGE_NAME):$(IMAGE_TAG)
@@ -51,21 +52,6 @@ publish: tag
 
 sh:
 	$(DOCKER) run $(RUN_OPTIONS) -tid --restart=on-failure --name $(SH_APP_NAME) --entrypoint=/bin/sh $(IMAGE_NAME):$(IMAGE_TAG)
-
-runsh: sh
-	$(DOCKER) attach $(SH_APP_NAME)
-
-
-vglinfo: sh
-	$(DOCKER) exec $(SH_APP_NAME) sh /scripts/vglinfo.sh
-	$(DOCKER) rm -f $(SH_APP_NAME)
-
-vgltest: sh
-	$(DOCKER) exec $(SH_APP_NAME) sh /scripts/vgltest.sh
-	$(DOCKER) rm -f $(SH_APP_NAME)
-
-cleansh:
-	$(DOCKER) rm -f $(SH_APP_NAME)
 
 status:
 	$(DOCKER) ps -a | grep $(IMAGE_NAME)
