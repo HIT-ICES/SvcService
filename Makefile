@@ -53,4 +53,4 @@ install: publish
 	$(K8S) apply -f deploy.yaml
 
 status:
-	$(DOCKER) ps -a | grep $(IMAGE_NAME)
+	watch $(K8S) get pods -l 'app=$(APP_NAME)'
