@@ -79,28 +79,30 @@ app.MapPost("service/getById", async ([FromBody] ByIdBean bean, [FromServices] S
 {
     var entity = await db.Services
         .Include(s => s.Interfaces)
-        .FirstOrDefaultAsync(s => s.Id == bean.ServiceId);
-    return entity is null ?
+        .Where(s => EF.Functions.Like(s.Id, $"%{bean.ServiceId}%"))
+            .ToArrayAsync();
+    return entity.Length == 0 ?
             Ok(MResponse.Failed($"Service with Id {bean.ServiceId} not found")) :
-            Ok(MResponse.Successful(Service.FromEntity(entity)));
+            Ok(MResponse.Successful(entity.Select(Service.FromEntity).ToArray()));
 }).WithName("GetServiceById").WithOpenApi();
 
 app.MapPost("/service/getByNameVersion", async ([FromBody] ByNameVersionBean bean, [FromServices] ServiceDbContext db) =>
 {
 
-    var entity = bean.Version is null ?
-        await db.Services
+    var entity = await (bean.Version is null ?
+        db.Services
             .Include(s => s.Interfaces)
-            .FirstOrDefaultAsync(s => s.Name == bean.Name && !s.HasVersion) :
-        await db.Services
+            .Where(s => EF.Functions.Like(s.Name, $"%{bean.Name}%")) :
+        db.Services
             .Include(s => s.Interfaces)
-            .FirstOrDefaultAsync(s => s.Name == bean.Name &&
-                                                   s.VersionMajor == bean.Version.Major &&
-                                                   s.VersionMinor == bean.Version.Minor &&
-                                                   s.VersionPatch == bean.Version.Patch);
-    return entity is null ?
+            .Where(s =>
+                EF.Functions.Like(s.Name, $"%{bean.Name}%") &&
+                EF.Functions.Like(s.VersionMajor, $"%{bean.Version.Major}%") && 
+                EF.Functions.Like(s.VersionMinor, $"%{bean.Version.Minor}%") &&
+                EF.Functions.Like(s.VersionPatch, $"%{bean.Version.Patch}%"))).ToArrayAsync();
+    return entity.Length==0 ?
         Ok(MResponse.Failed($"Service with Name {bean.Name} and Version {bean.Version} not found")) :
-        Ok(MResponse.Successful(Service.FromEntity(entity)));
+        Ok(MResponse.Successful(entity.Select(Service.FromEntity).ToArray()));
 }).WithName("GetServiceByNameVersion").WithOpenApi();
 
 app.Run();
