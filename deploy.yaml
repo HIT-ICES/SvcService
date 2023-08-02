@@ -69,7 +69,7 @@ spec:
         app: svc-service # change this to the desired label if needed
     spec:
       containers:
-        - image: 192.168.1.104:5000/cloud-collaboration-platform/svc-service:0.1.7 # change this to the desired image if needed
+        - image: 192.168.1.104:5000/cloud-collaboration-platform/svc-service:0.1.8 # change this to the desired image if needed
           name: svc-service # change this to the desired name if needed
           env:
             - name: MYSQL_UID

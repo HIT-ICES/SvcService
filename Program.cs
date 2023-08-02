@@ -44,6 +44,7 @@ using (var dbEnsureScope = app.Services.CreateScope())
 
 }
 
+app.UseCors(cors => cors.AllowAnyMethod().AllowAnyOrigin().AllowAnyHeader());
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -97,10 +98,10 @@ app.MapPost("/service/getByNameVersion", async ([FromBody] ByNameVersionBean bea
             .Include(s => s.Interfaces)
             .Where(s =>
                 EF.Functions.Like(s.Name, $"%{bean.Name}%") &&
-                EF.Functions.Like(s.VersionMajor, $"%{bean.Version.Major}%") && 
+                EF.Functions.Like(s.VersionMajor, $"%{bean.Version.Major}%") &&
                 EF.Functions.Like(s.VersionMinor, $"%{bean.Version.Minor}%") &&
                 EF.Functions.Like(s.VersionPatch, $"%{bean.Version.Patch}%"))).ToArrayAsync();
-    return entity.Length==0 ?
+    return entity.Length == 0 ?
         Ok(MResponse.Failed($"Service with Name {bean.Name} and Version {bean.Version} not found")) :
         Ok(MResponse.Successful(entity.Select(Service.FromEntity).ToArray()));
 }).WithName("GetServiceByNameVersion").WithOpenApi();
