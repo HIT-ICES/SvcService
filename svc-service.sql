@@ -116,3 +116,25 @@ VALUES ('20230515051450_addImageUrlforServiceEntity', '7.0.5');
 
 COMMIT;
 
+START TRANSACTION;
+
+CREATE TABLE `Dependencies` (
+    `CallerServiceId` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `CallerIdSuffix` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `CalleeServiceId` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `CalleeIdSuffix` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `SerilizedData` varchar(4096) CHARACTER SET utf8mb4 NOT NULL,
+    CONSTRAINT `PK_Dependencies` PRIMARY KEY (`CallerServiceId`, `CallerIdSuffix`, `CalleeServiceId`, `CalleeIdSuffix`),
+    CONSTRAINT `FK_Dependencies_Interfaces_CalleeServiceId_CalleeIdSuffix` FOREIGN KEY (`CalleeServiceId`, `CalleeIdSuffix`) REFERENCES `Interfaces` (`ServiceId`, `IdSuffix`) ON DELETE CASCADE,
+    CONSTRAINT `FK_Dependencies_Interfaces_CallerServiceId_CallerIdSuffix` FOREIGN KEY (`CallerServiceId`, `CallerIdSuffix`) REFERENCES `Interfaces` (`ServiceId`, `IdSuffix`) ON DELETE CASCADE,
+    CONSTRAINT `FK_Dependencies_Services_CalleeServiceId` FOREIGN KEY (`CalleeServiceId`) REFERENCES `Services` (`Id`) ON DELETE CASCADE,
+    CONSTRAINT `FK_Dependencies_Services_CallerServiceId` FOREIGN KEY (`CallerServiceId`) REFERENCES `Services` (`Id`) ON DELETE CASCADE
+) CHARACTER SET=utf8mb4;
+
+CREATE INDEX `IX_Dependencies_CalleeServiceId_CalleeIdSuffix` ON `Dependencies` (`CalleeServiceId`, `CalleeIdSuffix`);
+
+INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+VALUES ('20230804063422_Dependency', '7.0.5');
+
+COMMIT;
+

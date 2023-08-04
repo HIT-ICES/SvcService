@@ -5,7 +5,6 @@ namespace SvcService.Data;
 
 public class InterfaceEntity
 {
-    record Interface(string Id, string Path, int InputSize, string OutputSize);
     public ServiceEntity Service { get; set; }
     [ForeignKey(nameof(Service))]
     public string ServiceId { get; set; }
@@ -16,6 +15,9 @@ public class InterfaceEntity
     public int InputSize { get; set; }
     [MaxLength(50)]
     public string OutputSize{ get; set; }
+
+    public List<DependencyEntity> Callers { get; set; } = new();
+    public List<DependencyEntity> Callees { get; set; } = new();
 
     [NotMapped]
     public string Id

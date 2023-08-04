@@ -5,7 +5,8 @@ using SvcService;
 using SvcService.Data;
 using Service = SvcService.Service;
 using static Microsoft.AspNetCore.Http.Results;
-
+using System.Text.Json;
+using Steeltoe.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,14 +71,14 @@ app.MapPost("/service/update", async ([FromBody] Service service, [FromServices]
     return MResponse.Successful();
 }).WithName("UpdateService").WithOpenApi();
 
-app.MapPost("service/delete", async ([FromBody] ByIdBean bean, [FromServices] ServiceDbContext db) =>
+app.MapPost("service/delete", async ([FromBody] ByServiceIdBean bean, [FromServices] ServiceDbContext db) =>
 {
     return await db.Services.Where(s => s.Id == bean.ServiceId).DeleteFromQueryAsync() >= 1
         ? MResponse.Successful()
         : MResponse.Failed($"Service with Id {bean.ServiceId} not found");
 }).WithName("DeleteService").WithOpenApi();
 
-app.MapPost("service/getById", async ([FromBody] ByIdBean bean, [FromServices] ServiceDbContext db) =>
+app.MapPost("service/getById", async ([FromBody] ByServiceIdBean bean, [FromServices] ServiceDbContext db) =>
 {
     var entity = await db.Services
         .Include(s => s.Interfaces)
@@ -107,12 +108,95 @@ app.MapPost("/service/getByNameVersion", async ([FromBody] ByNameVersionBean bea
         Ok(MResponse.Successful(entity.Select(Service.FromEntity).ToArray()));
 }).WithName("GetServiceByNameVersion").WithOpenApi();
 
+app.MapPost("/service/addDependencies", async ([FromBody] List<DependencyDescription> bean, [FromServices] ServiceDbContext db) =>
+{
+    async Task _add(DependencyDescription depd)
+    {
+        var entity = new DependencyEntity();
+        depd.CopyToEntity(entity);
+        await db.Dependencies.AddAsync(entity);
+
+    }
+
+    await Task.WhenAll(bean.Select(_add));
+    await db.SaveChangesAsync();
+    return Ok(MResponse.Successful());
+}).WithName("AddDependencies").WithOpenApi();
+
+app.MapPost("/service/updateDependencies", async ([FromBody] List<DependencyDescription> bean, [FromServices] ServiceDbContext db) =>
+{
+    void _update(DependencyDescription depd)
+    {
+        var entity = new DependencyEntity();
+        depd.CopyToEntity(entity);
+        db.Dependencies.Update(entity);
+
+    }
+
+    bean.ForEach(_update);
+    await db.SaveChangesAsync();
+    return Ok(MResponse.Successful());
+}).WithName("UpdateDependencies").WithOpenApi();
+
+app.MapPost("/service/deleteDependencies", async ([FromBody] List<DependencyDescription> bean, [FromServices] ServiceDbContext db) =>
+{
+    void _delete(DependencyDescription depd)
+    {
+        var entity = new DependencyEntity();
+        depd.CopyToEntity(entity);
+        db.Dependencies.Remove(entity);
+
+    }
+
+    bean.ForEach(_delete);
+    await db.SaveChangesAsync();
+    return Ok(MResponse.Successful());
+}).WithName("DeleteDependencies").WithOpenApi();
+
+app.MapPost("/service/getInterfaceInvocation", async ([FromBody] ByInterfaceIdBean bean, [FromServices] ServiceDbContext db) =>
+{
+    var (service, suffix) = (bean.ServiceId, bean.IdSuffix);
+    var invoked = await
+        db.Dependencies.Include(d => d.Callee)
+            .Where(d => d.CalleeServiceId == service && d.CalleeIdSuffix == suffix)
+            .ToArrayAsync();
+    var invoking = await
+        db.Dependencies.Include(d => d.Callee)
+            .Where(d => d.CallerServiceId == service && d.CallerIdSuffix == suffix)
+            .ToArrayAsync();
+    return Ok(MResponse.Successful(new InvocationInfo(
+        invoked.Select(InvocationDescription.FromEntity).ToList(),
+        invoking.Select(InvocationDescription.FromEntity).ToList())));
+}).WithName("GetInterfaceInvocation").WithOpenApi();
+
+app.MapPost("/service/getServiceInvocation", async ([FromBody] ByInterfaceIdBean bean, [FromServices] ServiceDbContext db) =>
+{
+    var service = bean.ServiceId;
+    var invoked = await
+        db.Dependencies.Include(d => d.Callee)
+            .Where(d => d.CalleeServiceId == service)
+            .ToArrayAsync();
+    var invoking = await
+        db.Dependencies.Include(d => d.Callee)
+            .Where(d => d.CallerServiceId == service)
+            .ToArrayAsync();
+    return Ok(MResponse.Successful(new ServiceInvocationInfo(
+        invoked.ToDictionary(i=>i.CalleeId, InvocationDescription.FromEntity),
+        invoking.ToDictionary(i => i.CallerId,InvocationDescription.FromEntity))));
+}).WithName("GetServiceInvocation").WithOpenApi();
+
 app.Run();
 
 namespace SvcService
 {
 
-    public record ByIdBean(string ServiceId);
+    public record ByServiceIdBean(string ServiceId);
+
+    public record ByInterfaceIdBean(string Id)
+    {
+        public string IdSuffix =>Id.Split("::")[1];
+        public string ServiceId => Id.Split("::")[0];
+    }
     public record ByNameVersionBean(string Name, Version? Version);
 
     public record Version(string Major, string Minor, string Patch);
@@ -168,4 +252,29 @@ namespace SvcService
                 entity.DesiredCapability);
         }
     }
+
+    public record DependencyDescription(string Caller, string Callee, JsonElement ExtraData)
+    {
+        public void CopyToEntity(DependencyEntity entity)
+        {
+            entity.CallerId = Caller;
+            entity.CalleeId = Callee;
+            entity.SerilizedData = ExtraData.GetRawText();
+        }
+        public static DependencyDescription FromEntity(DependencyEntity entity)
+            => new(entity.CallerId, entity.CalleeId,
+                JsonSerializer.Deserialize<JsonElement>(entity.SerilizedData));
+
+    }
+
+    public record InvocationDescription(string Caller, string Callee, string Path, JsonElement ExtraData)
+    {
+        public static InvocationDescription FromEntity(DependencyEntity entity)
+            => new(entity.CallerId, entity.CalleeId, entity.Callee.Path, JsonSerializer.Deserialize<JsonElement>(entity.SerilizedData));
+    }
+
+    public record InvocationInfo(List<InvocationDescription> Invoked, List<InvocationDescription> Invoking);
+    public record ServiceInvocationInfo(Dictionary<string, InvocationDescription> Invoked,
+        Dictionary<string, InvocationDescription> Invoking);
+
 }

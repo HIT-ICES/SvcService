@@ -98,5 +98,7 @@ public class ServiceEntity
     [Required]
     public int DesiredCapability{ get; set; }
     public List<InterfaceEntity> Interfaces{ get; set; }
+    public List<DependencyEntity> Callers { get; set; } = new();
+    public List<DependencyEntity> Callees { get; set; } = new();
 }
 #pragma warning restore CS8618 // NotNull property not initialized
