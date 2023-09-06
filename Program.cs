@@ -153,37 +153,33 @@ app.MapPost("/service/deleteDependencies", async ([FromBody] List<DependencyDesc
     return Ok(MResponse.Successful());
 }).WithName("DeleteDependencies").WithOpenApi();
 
-app.MapPost("/service/getInterfaceInvocation", async ([FromBody] ByInterfaceIdBean bean, [FromServices] ServiceDbContext db) =>
+app.MapPost("/service/getInterfaceDependencies", handler: ([FromServices] ServiceDbContext db) =>
 {
-    var (service, suffix) = (bean.ServiceId, bean.IdSuffix);
-    var invoked = await
-        db.Dependencies.Include(d => d.Callee)
-            .Where(d => d.CalleeServiceId == service && d.CalleeIdSuffix == suffix)
-            .ToArrayAsync();
-    var invoking = await
-        db.Dependencies.Include(d => d.Callee)
-            .Where(d => d.CallerServiceId == service && d.CallerIdSuffix == suffix)
-            .ToArrayAsync();
-    return Ok(MResponse.Successful(new InvocationInfo(
-        invoked.Select(InvocationDescription.FromEntity).ToList(),
-        invoking.Select(InvocationDescription.FromEntity).ToList())));
-}).WithName("GetInterfaceInvocation").WithOpenApi();
+    var all= new List<InterfaceDependencyGraphNode>();
+    foreach (var depdGroup in db.Dependencies.GroupBy(d => d.CallerId))
+    {
+        all.Add(
+        new InterfaceDependencyGraphNode(depdGroup.Key,
+            depdGroup.ToDictionary(d => d.CalleeId, d =>
+                JsonSerializer.Deserialize<JsonElement>(d.SerilizedData))));
+    }
+    return Ok(MResponse.Successful(all));
+}).WithName("GetInterfaceDependencies").WithOpenApi();
 
-app.MapPost("/service/getServiceInvocation", async ([FromBody] ByInterfaceIdBean bean, [FromServices] ServiceDbContext db) =>
+app.MapPost("/service/getServiceDependencies",  ( [FromServices] ServiceDbContext db) =>
 {
-    var service = bean.ServiceId;
-    var invoked = await
-        db.Dependencies.Include(d => d.Callee)
-            .Where(d => d.CalleeServiceId == service)
-            .ToArrayAsync();
-    var invoking = await
-        db.Dependencies.Include(d => d.Callee)
-            .Where(d => d.CallerServiceId == service)
-            .ToArrayAsync();
-    return Ok(MResponse.Successful(new ServiceInvocationInfo(
-        invoked.ToDictionary(i=>i.CalleeId, InvocationDescription.FromEntity),
-        invoking.ToDictionary(i => i.CallerId,InvocationDescription.FromEntity))));
-}).WithName("GetServiceInvocation").WithOpenApi();
+    var all = new List<ServiceDependencyGraphNode>();
+    foreach (var depdGroup in 
+             db.Dependencies.GroupBy(d => d.CalleeServiceId))
+    {
+        all.Add(
+            new ServiceDependencyGraphNode(depdGroup.Key,
+                depdGroup.GroupBy(d=>d.CalleeServiceId)
+                    .ToDictionary(d => d.Key, 
+                        d=>d.Select(DependencyDescription.FromEntity).ToArray())));
+    }
+    return Ok(MResponse.Successful(all));
+}).WithName("GetServiceDependencies").WithOpenApi();
 
 app.Run();
 
@@ -267,14 +263,6 @@ namespace SvcService
 
     }
 
-    public record InvocationDescription(string Caller, string Callee, string Path, JsonElement ExtraData)
-    {
-        public static InvocationDescription FromEntity(DependencyEntity entity)
-            => new(entity.CallerId, entity.CalleeId, entity.Callee.Path, JsonSerializer.Deserialize<JsonElement>(entity.SerilizedData));
-    }
-
-    public record InvocationInfo(List<InvocationDescription> Invoked, List<InvocationDescription> Invoking);
-    public record ServiceInvocationInfo(Dictionary<string, InvocationDescription> Invoked,
-        Dictionary<string, InvocationDescription> Invoking);
-
+    public record InterfaceDependencyGraphNode(string Caller, Dictionary<string, JsonElement> Callees);
+    public record ServiceDependencyGraphNode(string Caller, Dictionary<string, DependencyDescription[]> Callees);
 }
