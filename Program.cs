@@ -89,6 +89,17 @@ app.MapPost("service/getById", async ([FromBody] ByServiceIdBean bean, [FromServ
             Ok(MResponse.Successful(entity.Select(Service.FromEntity).ToArray()));
 }).WithName("GetServiceById").WithOpenApi();
 
+app.MapPost("service/getServiceByExactId", async ([FromBody] ByServiceIdBean bean, [FromServices] ServiceDbContext db) =>
+{
+    var entity = await db.Services
+        .Include(s => s.Interfaces)
+        .Where(s => s.Id==bean.ServiceId)
+        .ToArrayAsync();
+    return entity.Length == 0 ?
+        Ok(MResponse.Failed($"Service with Id {bean.ServiceId} not found")) :
+        Ok(MResponse.Successful(entity.Select(Service.FromEntity).ToArray()));
+}).WithName("GetServiceByExactId").WithOpenApi();
+
 app.MapPost("/service/getByNameVersion", async ([FromBody] ByNameVersionBean bean, [FromServices] ServiceDbContext db) =>
 {
 
