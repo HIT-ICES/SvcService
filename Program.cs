@@ -156,7 +156,7 @@ app.MapPost("/service/deleteDependencies", async ([FromBody] List<DependencyDesc
 app.MapPost("/service/getInterfaceDependencies", handler: ([FromServices] ServiceDbContext db) =>
 {
     var all= new List<InterfaceDependencyGraphNode>();
-    foreach (var depdGroup in db.Dependencies.GroupBy(d => d.CallerId))
+    foreach (var depdGroup in db.Dependencies.ToList().GroupBy(d => d.CallerId))
     {
         all.Add(
         new InterfaceDependencyGraphNode(depdGroup.Key,
