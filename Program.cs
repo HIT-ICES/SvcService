@@ -170,7 +170,7 @@ app.MapPost("/service/getServiceDependencies",  ( [FromServices] ServiceDbContex
 {
     var all = new List<ServiceDependencyGraphNode>();
     foreach (var depdGroup in 
-             db.Dependencies.GroupBy(d => d.CalleeServiceId))
+             db.Dependencies.GroupBy(d => d.CallerServiceId))
     {
         all.Add(
             new ServiceDependencyGraphNode(depdGroup.Key,
