@@ -94,7 +94,7 @@ app.MapPost("service/getServiceByExactId", async ([FromBody] ByServiceIdBean bea
 {
     var entity = await db.Services
         .Include(s => s.Interfaces)
-        .Where(s => s.Id==bean.ServiceId)
+        .Where(s => s.Id == bean.ServiceId)
         .ToArrayAsync();
     return entity.Length == 0 ?
         Ok(MResponse.Failed($"Service with Id {bean.ServiceId} not found")) :
@@ -167,7 +167,7 @@ app.MapPost("/service/deleteDependencies", async ([FromBody] List<DependencyDesc
 
 app.MapPost("/service/getInterfaceDependencies", handler: ([FromServices] ServiceDbContext db) =>
 {
-    var all= new List<InterfaceDependencyGraphNode>();
+    var all = new List<InterfaceDependencyGraphNode>();
     foreach (var depdGroup in db.Dependencies.ToList().GroupBy(d => d.CallerId))
     {
         all.Add(
@@ -178,17 +178,17 @@ app.MapPost("/service/getInterfaceDependencies", handler: ([FromServices] Servic
     return Ok(MResponse.Successful(all));
 }).WithName("GetInterfaceDependencies").WithOpenApi();
 
-app.MapPost("/service/getServiceDependencies",  ( [FromServices] ServiceDbContext db) =>
+app.MapPost("/service/getServiceDependencies", ([FromServices] ServiceDbContext db) =>
 {
     var all = new List<ServiceDependencyGraphNode>();
-    foreach (var depdGroup in 
+    foreach (var depdGroup in
              db.Dependencies.GroupBy(d => d.CallerServiceId))
     {
         all.Add(
             new ServiceDependencyGraphNode(depdGroup.Key,
-                depdGroup.GroupBy(d=>d.CalleeServiceId)
-                    .ToDictionary(d => d.Key, 
-                        d=>d.Select(DependencyDescription.FromEntity).ToArray())));
+                depdGroup.GroupBy(d => d.CalleeServiceId)
+                    .ToDictionary(d => d.Key,
+                        d => d.Select(DependencyDescription.FromEntity).ToArray())));
     }
     return Ok(MResponse.Successful(all));
 }).WithName("GetServiceDependencies").WithOpenApi();
@@ -202,31 +202,32 @@ namespace SvcService
 
     public record ByInterfaceIdBean(string Id)
     {
-        public string IdSuffix =>Id.Split("::")[1];
+        public string IdSuffix => Id.Split("::")[1];
         public string ServiceId => Id.Split("::")[0];
     }
     public record ByNameVersionBean(string Name, Version? Version);
 
     public record Version(string Major, string Minor, string Patch);
 
-    public record Interface(string Id, string Path, int InputSize, string OutputSize, string Method, string Info )
+    public record Interface(string Id, string Path, decimal InputSize, decimal OutputSize, string Method, string Info)
     {
-        public InterfaceEntity ToEntity()
+        public InterfaceEntity ToEntity(string serviceName)
         {
+
             return new()
             {
-                Id = Id,
+                Id = Id.Contains("::") ? Id : $"{serviceName}::{Id}",
                 Path = Path,
                 InputSize = InputSize,
                 OutputSize = OutputSize,
-                Info= Info,
-                Method= Method,
+                Info = Info,
+                Method = Method,
             };
         }
 
         public static Interface FromEntity(InterfaceEntity entity)
         {
-            return new(entity.Id, entity.Path, entity.InputSize, entity.OutputSize, entity.Method,entity.Info);
+            return new(entity.Id, entity.Path, entity.InputSize, entity.OutputSize, entity.Method, entity.Info);
         }
     }
 
@@ -246,7 +247,7 @@ namespace SvcService
             entity.Version = Version;
             entity.DesiredResource = DesiredResource;
             entity.IdleResource = IdleResource;
-            entity.Interfaces = Interfaces.Select(i => i.ToEntity()).ToList();
+            entity.Interfaces = Interfaces.Select(i => i.ToEntity(Id)).ToList();
         }
         public static Service FromEntity(ServiceEntity entity)
         {

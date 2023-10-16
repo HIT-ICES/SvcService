@@ -21,14 +21,14 @@ namespace SvcService.Migrations
             modelBuilder.Entity("SvcService.Data.DependencyEntity", b =>
                 {
                     b.Property<string>("CallerServiceId")
-                        .HasColumnType("varchar(32)");
+                        .HasColumnType("varchar(64)");
 
                     b.Property<string>("CallerIdSuffix")
                         .HasMaxLength(32)
                         .HasColumnType("varchar(32)");
 
                     b.Property<string>("CalleeServiceId")
-                        .HasColumnType("varchar(32)");
+                        .HasColumnType("varchar(64)");
 
                     b.Property<string>("CalleeIdSuffix")
                         .HasMaxLength(32)
@@ -49,34 +49,32 @@ namespace SvcService.Migrations
             modelBuilder.Entity("SvcService.Data.InterfaceEntity", b =>
                 {
                     b.Property<string>("ServiceId")
-                        .HasColumnType("varchar(32)");
+                        .HasColumnType("varchar(64)");
 
                     b.Property<string>("IdSuffix")
-                        .HasMaxLength(32)
-                        .HasColumnType("varchar(32)");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
 
                     b.Property<string>("Info")
                         .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
 
-                    b.Property<int>("InputSize")
-                        .HasColumnType("int");
+                    b.Property<decimal>("InputSize")
+                        .HasColumnType("decimal(16,4)");
 
                     b.Property<string>("Method")
                         .IsRequired()
                         .HasMaxLength(16)
                         .HasColumnType("varchar(16)");
 
-                    b.Property<string>("OutputSize")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                    b.Property<decimal>("OutputSize")
+                        .HasColumnType("decimal(16,4)");
 
                     b.Property<string>("Path")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
 
                     b.HasKey("ServiceId", "IdSuffix");
 
@@ -86,8 +84,8 @@ namespace SvcService.Migrations
             modelBuilder.Entity("SvcService.Data.ServiceEntity", b =>
                 {
                     b.Property<string>("Id")
-                        .HasMaxLength(32)
-                        .HasColumnType("varchar(32)");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
 
                     b.Property<int>("DesiredCapability")
                         .HasColumnType("int");
@@ -135,8 +133,8 @@ namespace SvcService.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("varchar(32)");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
 
                     b.Property<string>("Repo")
                         .IsRequired()

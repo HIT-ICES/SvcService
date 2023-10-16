@@ -8,14 +8,15 @@ public class InterfaceEntity
     public ServiceEntity Service { get; set; }
     [ForeignKey(nameof(Service))]
     public string ServiceId { get; set; }
-    [Required,MaxLength(32)]
+    [Required,MaxLength(64)]
     public string IdSuffix { get; set; }
-    [Required, MaxLength(64)]
+    [Required, MaxLength(128)]
     public string Path { get; set; }
-    public int InputSize { get; set; }
-    [MaxLength(50)]
-    public string OutputSize{ get; set; }
-    [MaxLength(128)]
+    [Column(TypeName = "decimal(16,4)"), Required]
+    public decimal InputSize { get; set; }
+    [Column(TypeName = "decimal(16,4)"), Required]
+    public decimal OutputSize{ get; set; }
+    [MaxLength(256)]
     public string Info { get; set; }
     [MaxLength(16)]
     public string Method { get; set; }

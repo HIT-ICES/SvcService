@@ -10,8 +10,8 @@ using SvcService.Data;
 namespace SvcService.Migrations
 {
     [DbContext(typeof(ServiceDbContext))]
-    [Migration("20230508042542_hasPropInsteadOfNullable")]
-    partial class hasPropInsteadOfNullable
+    [Migration("20231016071036_ReInit")]
+    partial class ReInit
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -21,27 +21,63 @@ namespace SvcService.Migrations
                 .HasAnnotation("ProductVersion", "7.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("SvcService.Data.InterfaceEntity", b =>
+            modelBuilder.Entity("SvcService.Data.DependencyEntity", b =>
                 {
-                    b.Property<string>("ServiceId")
-                        .HasColumnType("varchar(32)");
+                    b.Property<string>("CallerServiceId")
+                        .HasColumnType("varchar(64)");
 
-                    b.Property<string>("IdSuffix")
+                    b.Property<string>("CallerIdSuffix")
                         .HasMaxLength(32)
                         .HasColumnType("varchar(32)");
 
-                    b.Property<int>("InputSize")
-                        .HasColumnType("int");
+                    b.Property<string>("CalleeServiceId")
+                        .HasColumnType("varchar(64)");
 
-                    b.Property<string>("OutputSize")
+                    b.Property<string>("CalleeIdSuffix")
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<string>("SerilizedData")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasMaxLength(4096)
+                        .HasColumnType("varchar(4096)");
+
+                    b.HasKey("CallerServiceId", "CallerIdSuffix", "CalleeServiceId", "CalleeIdSuffix");
+
+                    b.HasIndex("CalleeServiceId", "CalleeIdSuffix");
+
+                    b.ToTable("Dependencies");
+                });
+
+            modelBuilder.Entity("SvcService.Data.InterfaceEntity", b =>
+                {
+                    b.Property<string>("ServiceId")
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("IdSuffix")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("Info")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<decimal>("InputSize")
+                        .HasColumnType("decimal(16,4)");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("varchar(16)");
+
+                    b.Property<decimal>("OutputSize")
+                        .HasColumnType("decimal(16,4)");
 
                     b.Property<string>("Path")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
 
                     b.HasKey("ServiceId", "IdSuffix");
 
@@ -51,14 +87,14 @@ namespace SvcService.Migrations
             modelBuilder.Entity("SvcService.Data.ServiceEntity", b =>
                 {
                     b.Property<string>("Id")
-                        .HasMaxLength(32)
-                        .HasColumnType("varchar(32)");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
 
                     b.Property<int>("DesiredCapability")
                         .HasColumnType("int");
 
                     b.Property<decimal>("DesiredCpu")
-                        .HasColumnType("decimal(65,30)");
+                        .HasColumnType("decimal(16,4)");
 
                     b.Property<decimal>("DesiredDisk")
                         .HasColumnType("decimal(16,4)");
@@ -93,10 +129,15 @@ namespace SvcService.Migrations
                     b.Property<decimal>("IdleRam")
                         .HasColumnType("decimal(16,4)");
 
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("varchar(32)");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
 
                     b.Property<string>("Repo")
                         .IsRequired()
@@ -125,6 +166,41 @@ namespace SvcService.Migrations
                     b.ToTable("Services");
                 });
 
+            modelBuilder.Entity("SvcService.Data.DependencyEntity", b =>
+                {
+                    b.HasOne("SvcService.Data.ServiceEntity", "CalleeService")
+                        .WithMany("Callers")
+                        .HasForeignKey("CalleeServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SvcService.Data.ServiceEntity", "CallerService")
+                        .WithMany("Callees")
+                        .HasForeignKey("CallerServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SvcService.Data.InterfaceEntity", "Callee")
+                        .WithMany("Callers")
+                        .HasForeignKey("CalleeServiceId", "CalleeIdSuffix")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SvcService.Data.InterfaceEntity", "Caller")
+                        .WithMany("Callees")
+                        .HasForeignKey("CallerServiceId", "CallerIdSuffix")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Callee");
+
+                    b.Navigation("CalleeService");
+
+                    b.Navigation("Caller");
+
+                    b.Navigation("CallerService");
+                });
+
             modelBuilder.Entity("SvcService.Data.InterfaceEntity", b =>
                 {
                     b.HasOne("SvcService.Data.ServiceEntity", "Service")
@@ -136,8 +212,19 @@ namespace SvcService.Migrations
                     b.Navigation("Service");
                 });
 
+            modelBuilder.Entity("SvcService.Data.InterfaceEntity", b =>
+                {
+                    b.Navigation("Callees");
+
+                    b.Navigation("Callers");
+                });
+
             modelBuilder.Entity("SvcService.Data.ServiceEntity", b =>
                 {
+                    b.Navigation("Callees");
+
+                    b.Navigation("Callers");
+
                     b.Navigation("Interfaces");
                 });
 #pragma warning restore 612, 618
