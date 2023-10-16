@@ -7,6 +7,7 @@ using Service = SvcService.Service;
 using static Microsoft.AspNetCore.Http.Results;
 using System.Text.Json;
 using Steeltoe.Extensions.Configuration;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -208,7 +209,7 @@ namespace SvcService
 
     public record Version(string Major, string Minor, string Patch);
 
-    public record Interface(string Id, string Path, int InputSize, string OutputSize)
+    public record Interface(string Id, string Path, int InputSize, string OutputSize, string Method, string Info )
     {
         public InterfaceEntity ToEntity()
         {
@@ -218,12 +219,14 @@ namespace SvcService
                 Path = Path,
                 InputSize = InputSize,
                 OutputSize = OutputSize,
+                Info= Info,
+                Method= Method,
             };
         }
 
         public static Interface FromEntity(InterfaceEntity entity)
         {
-            return new(entity.Id, entity.Path, entity.InputSize, entity.OutputSize);
+            return new(entity.Id, entity.Path, entity.InputSize, entity.OutputSize, entity.Method,entity.Info);
         }
     }
 

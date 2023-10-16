@@ -15,7 +15,10 @@ public class InterfaceEntity
     public int InputSize { get; set; }
     [MaxLength(50)]
     public string OutputSize{ get; set; }
-
+    [MaxLength(128)]
+    public string Info { get; set; }
+    [MaxLength(16)]
+    public string Method { get; set; }
     public List<DependencyEntity> Callers { get; set; } = new();
     public List<DependencyEntity> Callees { get; set; } = new();
 
