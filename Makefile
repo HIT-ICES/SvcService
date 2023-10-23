@@ -49,7 +49,7 @@ tag: default
 publish: tag
 	$(DOCKER) push $(REPO_NAME)/$(IMAGE_NAME):$(IMAGE_TAG)
 
-install: publish
+install:
 	IMG_TAG=$(IMAGE_TAG) envsubst < deploy.yaml | $(K8S) apply -f -
 
 status:
