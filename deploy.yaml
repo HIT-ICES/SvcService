@@ -1,16 +1,15 @@
-# mysql-secret.yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: svc-service-mysql-secret
+  name: $SVC_NAME-mysql-secret
 type: kubernetes.io/basic-auth
 stringData:
-  password: aComple[ks]Pwd # change this to a secure password
+  password: W0Kg49+fyQZ!liVo # change this to a secure password
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: svc-service-mysql-pvc
+  name: $SVC_NAME-mysql-pvc
 spec:
   accessModes:
     - ReadWriteOnce
@@ -19,42 +18,42 @@ spec:
       storage: 1Gi
   selector:
     matchLabels:
-      app: svc-service-mysql
+      app: $SVC_NAME-mysql
   storageClassName: nfs-storage
 ---
 # mysql-deployment.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: svc-service-mysql
+  name: $SVC_NAME-mysql
 spec:
   ports:
     - port: 3306 # change this to the desired port if needed
   selector:
-    app: svc-service-mysql
+    app: $SVC_NAME-mysql
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: svc-service-mysql # change this to the desired name if needed
+  name: $SVC_NAME-mysql # change this to the desired name if needed
 spec:
   selector:
     matchLabels:
-      app: svc-service-mysql # change this to the desired label if needed
+      app: $SVC_NAME-mysql # change this to the desired label if needed
   template:
     metadata:
       labels:
-        app: svc-service-mysql # change this to the desired label if needed
+        app: $SVC_NAME-mysql # change this to the desired label if needed
     spec:
       containers:
         - image: mysql:5.6 # change this to the desired image if needed
-          name: svc-service-mysql # change this to the desired name if needed
+          name: $SVC_NAME-mysql # change this to the desired name if needed
           env:
             # Use secret in real usage, see https://kubernetes.io/docs/concepts/configuration/secret/\
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: svc-service-mysql-secret # reference the secret created above, change this to the desired name if needed 
+                  name: $SVC_NAME-mysql-secret # reference the secret created above, change this to the desired name if needed 
                   key: password # reference the key in the secret, change this to the desired key if needed 
           volumeMounts:
             - mountPath: "/var/lib/mysql"
@@ -65,43 +64,43 @@ spec:
       volumes:
         - name: mysql-data
           persistentVolumeClaim:
-            claimName: cluster-service-mysql-pvc
+            claimName: $SVC_NAME-mysql-pvc
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: svc-service
+  name: $SVC_NAME
 spec:
   ports:
     - port: 80 # change this to the desired port if needed
   selector:
-    app: svc-service
+    app: $SVC_NAME
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: svc-service # change this to the desired name if needed
+  name: $SVC_NAME # change this to the desired name if needed
 spec:
   selector:
     matchLabels:
-      app: svc-service # change this to the desired label if needed
+      app: $SVC_NAME # change this to the desired label if needed
   template:
     metadata:
       labels:
-        app: svc-service # change this to the desired label if needed
+        app: $SVC_NAME # change this to the desired label if needed
     spec:
       containers:
-        - image: 192.168.1.104:5000/cloud-collaboration-platform/svc-service:$IMG_TAG # change this to the desired image if needed
-          name: svc-service # change this to the desired name if needed
+        - image: $IMG_REPO/$SVC_NAME:$IMG_TAG # change this to the desired image if needed
+          name: $SVC_NAME # change this to the desired name if needed
           env:
             - name: MYSQL_UID
               value: root
             - name: MYSQL_IP
-              value: svc-service-mysql
+              value: $SVC_NAME-mysql
             - name: MYSQL_PWD
               valueFrom:
                 secretKeyRef:
-                  name: svc-service-mysql-secret # reference the secret created above, change this to the desired name if needed 
+                  name: $SVC_NAME-mysql-secret # reference the secret created above, change this to the desired name if needed 
                   key: password # reference the key in the secret, change this to the desired key if needed 
           ports:
             - containerPort: 80 # change this to the desired port if needed 
