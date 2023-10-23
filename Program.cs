@@ -150,6 +150,40 @@ app.MapPost("/service/updateDependencies", async ([FromBody] List<DependencyDesc
     return Ok(MResponse.Successful());
 }).WithName("UpdateDependencies").WithOpenApi();
 
+app.MapPost("/service/autoUpdateDependencies", async (
+    [FromBody] List<AutoTraceDependencyDescription> bean, [FromServices] ServiceDbContext db) =>
+{
+    async Task _update(AutoTraceDependencyDescription depd)
+    {
+        var existed = await
+        db.Dependencies.AsTracking().FirstOrDefaultAsync(
+            d =>
+            d.CallerServiceId == depd.CallerService &&
+            d.CallerIdSuffix == depd.CallerInterface &&
+            d.CalleeServiceId == depd.CalleeService &&
+            d.CalleeIdSuffix == depd.CalleeInterface);
+        if (existed is null)
+        {
+            var entity = new DependencyEntity();
+            depd.CopyToEntity(entity);
+            db.Dependencies.Add(entity);
+        }
+        else
+        {
+            depd.CopyToEntity(existed);
+        }
+
+
+    }
+
+    foreach (var depd in bean)
+    {
+        await _update(depd);
+    }
+    await db.SaveChangesAsync();
+    return Ok(MResponse.Successful());
+}).WithName("Automatically Update Dependencies (Called by RouteTraceService)").WithOpenApi();
+
 app.MapPost("/service/deleteDependencies", async ([FromBody] List<DependencyDescription> bean, [FromServices] ServiceDbContext db) =>
 {
     void _delete(DependencyDescription depd)
@@ -277,7 +311,27 @@ namespace SvcService
                 JsonSerializer.Deserialize<JsonElement>(entity.SerilizedData));
 
     }
+    public record AutoTraceDependencyDescription(
+        string CallerService,
+        string CallerInterface,
+        string CalleeService,
+        string CalleeInterface,
+        decimal RequestSize,
+        decimal ResponseSize)
+    {
+        public void CopyToEntity(DependencyEntity entity)
+        {
+            entity.CallerServiceId = CallerService;
+            entity.CallerIdSuffix = CallerInterface;
+            entity.CalleeServiceId = CalleeService;
+            entity.CalleeIdSuffix = CalleeInterface;
 
+            entity.SerilizedData =
+                $$"""
+                  {"requestSize": {{RequestSize:0.0}},"responseSize": {{ResponseSize:0.0}}}
+                  """;
+        }
+    }
     public record InterfaceDependencyGraphNode(string Caller, Dictionary<string, JsonElement> Callees);
     public record ServiceDependencyGraphNode(string Caller, Dictionary<string, DependencyDescription[]> Callees);
 }
