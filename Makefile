@@ -50,7 +50,7 @@ publish: tag
 	$(DOCKER) push $(REPO_NAME)/$(IMAGE_NAME):$(IMAGE_TAG)
 
 install: publish
-	$(K8S) apply -f deploy.yaml
+	IMG_TAG=$(IMAGE_TAG) envsubst < deploy.yaml | $(K8S) apply -f -
 
 status:
 	watch $(K8S) get pods -l 'app=$(APP_NAME)'

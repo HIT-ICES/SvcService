@@ -7,6 +7,21 @@ type: kubernetes.io/basic-auth
 stringData:
   password: aComple[ks]Pwd # change this to a secure password
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: svc-service-mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      app: svc-service-mysql
+  storageClassName: nfs-storage
+---
 # mysql-deployment.yaml
 apiVersion: v1
 kind: Service
@@ -41,9 +56,16 @@ spec:
                 secretKeyRef:
                   name: svc-service-mysql-secret # reference the secret created above, change this to the desired name if needed 
                   key: password # reference the key in the secret, change this to the desired key if needed 
+          volumeMounts:
+            - mountPath: "/var/lib/mysql"
+              name: mysql-data
           ports:
             - containerPort: 3306 # change this to the desired port if needed 
               name: mysql # change this to the desired name if needed 
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: cluster-service-mysql-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -69,7 +91,7 @@ spec:
         app: svc-service # change this to the desired label if needed
     spec:
       containers:
-        - image: 192.168.1.104:5000/cloud-collaboration-platform/svc-service:0.3 # change this to the desired image if needed
+        - image: 192.168.1.104:5000/cloud-collaboration-platform/svc-service:$IMG_TAG # change this to the desired image if needed
           name: svc-service # change this to the desired name if needed
           env:
             - name: MYSQL_UID
