@@ -153,18 +153,43 @@ app.MapPost("/service/updateDependencies", async ([FromBody] List<DependencyDesc
 app.MapPost("/service/autoUpdateDependencies", async (
     [FromBody] List<AutoTraceDependencyDescription> bean, [FromServices] ServiceDbContext db) =>
 {
-    async Task _update(AutoTraceDependencyDescription depd)
+    async Task<string?> _findIf(string service, string @if)
     {
-        var existed = await
-        db.Dependencies.AsTracking().FirstOrDefaultAsync(
-            d =>
-            d.CallerServiceId == depd.CallerService &&
-            d.CallerIdSuffix == depd.CallerInterface &&
-            d.CalleeServiceId == depd.CalleeService &&
-            d.CalleeIdSuffix == depd.CalleeInterface);
+        var candidates = await
+        db.Interfaces.AsNoTracking().Include(i => i.Service)
+        .Where(i => i.Service.Name == service).ToArrayAsync();
+        var target = candidates.FirstOrDefault(c => c.Path == @if) ??
+        candidates.FirstOrDefault(c => @if.StartsWith(c.Path));
+        return target?.Id;
+    }
+    async Task<AutoTraceDependencyDescription?> _update(AutoTraceDependencyDescription depd)
+    {
+        var depdQuery = db.Dependencies.AsTracking()
+            .Include(d => d.CalleeService)
+            .Include(d => d.CallerService)
+            .Include(d => d.Caller)
+            .Include(d => d.Callee);
+        var existedCandidates = await depdQuery
+            .Where(
+                d =>
+                    d.CallerService.Name == depd.CallerService &&
+                    d.CalleeService.Name == depd.CalleeService).ToArrayAsync();
+        var existed = existedCandidates.FirstOrDefault(
+            d => d.Caller.Path == depd.CallerInterface &&
+                d.Callee.Path == depd.CalleeInterface
+            ) ?? existedCandidates.FirstOrDefault(
+                d => depd.CallerInterface.StartsWith(d.Caller.Path) &&
+                     depd.CalleeInterface.StartsWith(d.Callee.Path)
+            );
+
         if (existed is null)
         {
             var entity = new DependencyEntity();
+            var callerIf = await _findIf(depd.CallerService, depd.CallerInterface);
+            var calleeIf = await _findIf(depd.CalleeService, depd.CalleeInterface);
+            if (callerIf is null || calleeIf is null)
+                return depd;
+            (entity.CallerId, entity.CalleeId) = (callerIf, calleeIf);
             depd.CopyToEntity(entity);
             db.Dependencies.Add(entity);
         }
@@ -172,16 +197,19 @@ app.MapPost("/service/autoUpdateDependencies", async (
         {
             depd.CopyToEntity(existed);
         }
-
+        return null;
 
     }
-
+    var faileds = new List<AutoTraceDependencyDescription>();
     foreach (var depd in bean)
     {
-        await _update(depd);
+        var failed = await _update(depd);
+        if (failed is { } f) faileds.Add(f);
     }
     await db.SaveChangesAsync();
-    return Ok(MResponse.Successful());
+    return faileds.Any() ? NotFound(
+        MResponse.Failed("Some dependencies failed to be added (Service/Inteface Not Found).", faileds)) :
+        Ok(MResponse.Successful());
 }).WithName("Automatically Update Dependencies (Called by RouteTraceService)").WithOpenApi();
 
 app.MapPost("/service/deleteDependencies", async ([FromBody] List<DependencyDescription> bean, [FromServices] ServiceDbContext db) =>
@@ -321,10 +349,10 @@ namespace SvcService
     {
         public void CopyToEntity(DependencyEntity entity)
         {
-            entity.CallerServiceId = CallerService;
-            entity.CallerIdSuffix = CallerInterface;
-            entity.CalleeServiceId = CalleeService;
-            entity.CalleeIdSuffix = CalleeInterface;
+            //entity.CallerServiceId = CallerService;
+            //entity.CallerIdSuffix = CallerInterface;
+            //entity.CalleeServiceId = CalleeService;
+            //entity.CalleeIdSuffix = CalleeInterface;
 
             entity.SerilizedData =
                 $$"""

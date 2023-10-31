@@ -23,4 +23,8 @@ public record MResponse(string Message, int Code) : MResponse<EmptyObject>(Messa
     {
         return new MResponse(message, FailedCode);
     }
+    public static MResponse<T> Failed<T>(string message, T value)
+    {
+        return new MResponse<T>(message, FailedCode,value);
+    }
 }
