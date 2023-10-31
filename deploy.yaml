@@ -5,21 +5,21 @@ metadata:
 type: kubernetes.io/basic-auth
 stringData:
   password: W0Kg49+fyQZ!liVo # change this to a secure password
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: $SVC_NAME-mysql-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  selector:
-    matchLabels:
-      app: $SVC_NAME-mysql
-  storageClassName: nfs-storage
+#---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: $SVC_NAME-mysql-pvc
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 1Gi
+#   selector:
+#     matchLabels:
+#       app: $SVC_NAME-mysql
+#   storageClassName: nfs-storage
 ---
 # mysql-deployment.yaml
 apiVersion: v1
