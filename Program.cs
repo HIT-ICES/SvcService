@@ -244,13 +244,19 @@ app.MapPost("/service/getServiceDependencies", ([FromServices] ServiceDbContext 
 {
     var all = new List<ServiceDependencyGraphNode>();
     foreach (var depdGroup in
-             db.Dependencies.GroupBy(d => d.CallerServiceId))
+             db.Dependencies
+             .Include(d => d.Caller)
+             .Include(d => d.Callee)
+             .Include(d => d.CallerService)
+             .Include(d => d.CalleeService)
+             .GroupBy(d => d.CallerServiceId))
     {
         all.Add(
             new ServiceDependencyGraphNode(depdGroup.Key,
+            DependencyServiceDetail.FromEntity(depdGroup.First().CallerService),
                 depdGroup.GroupBy(d => d.CalleeServiceId)
                     .ToDictionary(d => d.Key,
-                        d => d.Select(DependencyDescription.FromEntity).ToArray())));
+                        d => d.Select(DetailedDependencyDescription.FromEntity).ToArray())));
     }
     return Ok(MResponse.Successful(all));
 }).WithName("GetServiceDependencies").WithOpenApi();
@@ -325,7 +331,19 @@ namespace SvcService
                 entity.DesiredCapability);
         }
     }
-
+    public record DependencyServiceDetail(string Name, string Repo, string ImageUrl)
+    {
+        public static DependencyServiceDetail FromEntity(ServiceEntity entity)
+            => new(entity.Name, entity.Repo, entity.ImageUrl);
+    }
+    public record DetailedDependencyDescription(string Caller, string CallerPath, string Callee, string CalleePath, DependencyServiceDetail CalleeServiceDetail, JsonElement ExtraData)
+        : DependencyDescription(Caller, Callee, ExtraData)
+    {
+        public static DetailedDependencyDescription FromEntity(DependencyEntity entity)
+            => new(entity.CallerId, entity.Caller.Path, entity.CalleeId, entity.Callee.Path,
+                DependencyServiceDetail.FromEntity(entity.CalleeService),
+                JsonSerializer.Deserialize<JsonElement>(entity.SerilizedData));
+    }
     public record DependencyDescription(string Caller, string Callee, JsonElement ExtraData)
     {
         public void CopyToEntity(DependencyEntity entity)
@@ -361,5 +379,5 @@ namespace SvcService
         }
     }
     public record InterfaceDependencyGraphNode(string Caller, Dictionary<string, JsonElement> Callees);
-    public record ServiceDependencyGraphNode(string Caller, Dictionary<string, DependencyDescription[]> Callees);
+    public record ServiceDependencyGraphNode(string Caller, DependencyServiceDetail CallerDetail, Dictionary<string, DetailedDependencyDescription[]> Callees);
 }
