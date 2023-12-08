@@ -67,6 +67,10 @@ app.MapPost("/service/update", async ([FromBody] Service service, [FromServices]
     var t = await db.Services.Include(s => s.Interfaces)
             .AsTracking().FirstOrDefaultAsync(s => s.Id == service.Id);
     if (t is null) return MResponse.Failed($"Service with Id {service.Id} not found");
+    foreach (var oldInterface in t.Interfaces)
+    {
+        db.Entry(oldInterface).State = EntityState.Detached;
+    }
     service.CopyToEntity(t);
     await db.SaveChangesAsync();
     return MResponse.Successful();
