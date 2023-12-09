@@ -26,7 +26,6 @@ namespace SvcService.Migrations
                 name: "CalleeIdSuffix",
                 table: "Dependencies",
                 type: "varchar(128)",
-                maxLength: 128,
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "varchar(32)",
@@ -38,7 +37,6 @@ namespace SvcService.Migrations
                 name: "CallerIdSuffix",
                 table: "Dependencies",
                 type: "varchar(128)",
-                maxLength: 128,
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "varchar(32)",
@@ -69,8 +67,7 @@ namespace SvcService.Migrations
                 maxLength: 32,
                 nullable: false,
                 oldClrType: typeof(string),
-                oldType: "varchar(128)",
-                oldMaxLength: 128)
+                oldType: "varchar(128)")
                 .Annotation("MySql:CharSet", "utf8mb4")
                 .OldAnnotation("MySql:CharSet", "utf8mb4");
 
@@ -81,8 +78,7 @@ namespace SvcService.Migrations
                 maxLength: 32,
                 nullable: false,
                 oldClrType: typeof(string),
-                oldType: "varchar(128)",
-                oldMaxLength: 128)
+                oldType: "varchar(128)")
                 .Annotation("MySql:CharSet", "utf8mb4")
                 .OldAnnotation("MySql:CharSet", "utf8mb4");
         }

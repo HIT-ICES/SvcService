@@ -10,7 +10,7 @@ using SvcService.Data;
 namespace SvcService.Migrations
 {
     [DbContext(typeof(ServiceDbContext))]
-    [Migration("20231209062831_ExtendFieldLength")]
+    [Migration("20231209063427_ExtendFieldLength")]
     partial class ExtendFieldLength
     {
         /// <inheritdoc />
@@ -27,14 +27,12 @@ namespace SvcService.Migrations
                         .HasColumnType("varchar(64)");
 
                     b.Property<string>("CallerIdSuffix")
-                        .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
 
                     b.Property<string>("CalleeServiceId")
                         .HasColumnType("varchar(64)");
 
                     b.Property<string>("CalleeIdSuffix")
-                        .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
 
                     b.Property<string>("SerilizedData")

@@ -24,14 +24,12 @@ namespace SvcService.Migrations
                         .HasColumnType("varchar(64)");
 
                     b.Property<string>("CallerIdSuffix")
-                        .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
 
                     b.Property<string>("CalleeServiceId")
                         .HasColumnType("varchar(64)");
 
                     b.Property<string>("CalleeIdSuffix")
-                        .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
 
                     b.Property<string>("SerilizedData")
