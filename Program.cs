@@ -332,7 +332,7 @@ namespace SvcService
             entity.Version = Version;
             entity.DesiredResource = DesiredResource;
             entity.IdleResource = IdleResource;
-            entity.Interfaces = Interfaces.Select(i => i.ToEntity(Id)).ToList();
+            entity.Interfaces = Interfaces.Select(i => i.ToEntity(Id)).DistinctBy(@if=>@if.Id).ToList();
         }
         public static Service FromEntity(ServiceEntity entity)
         {
