@@ -8,7 +8,7 @@ public class InterfaceEntity
     public ServiceEntity Service { get; set; }
     [ForeignKey(nameof(Service))]
     public string ServiceId { get; set; }
-    [Required,MaxLength(128)]
+    [Required,MaxLength(64)]
     public string IdSuffix { get; set; }
     [Required, MaxLength(128)]
     public string Path { get; set; }

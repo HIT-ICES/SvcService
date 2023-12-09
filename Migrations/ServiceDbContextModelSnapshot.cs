@@ -24,13 +24,15 @@ namespace SvcService.Migrations
                         .HasColumnType("varchar(64)");
 
                     b.Property<string>("CallerIdSuffix")
-                        .HasColumnType("varchar(128)");
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
 
                     b.Property<string>("CalleeServiceId")
                         .HasColumnType("varchar(64)");
 
                     b.Property<string>("CalleeIdSuffix")
-                        .HasColumnType("varchar(128)");
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
 
                     b.Property<string>("SerilizedData")
                         .IsRequired()
@@ -50,8 +52,8 @@ namespace SvcService.Migrations
                         .HasColumnType("varchar(64)");
 
                     b.Property<string>("IdSuffix")
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
 
                     b.Property<string>("Info")
                         .IsRequired()

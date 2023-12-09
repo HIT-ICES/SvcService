@@ -7,9 +7,9 @@ namespace SvcService.Data;
 [Index(nameof(Name))]
 public class ServiceEntity
 {
-    [Key,MaxLength(64)]
+    [Key,MaxLength(32)]
     public string Id { get; set; }
-    [MaxLength(64), Required]
+    [MaxLength(32), Required]
     public string Name { get; set; }
     [MaxLength(128), Required]
     public string Repo{ get; set; }
