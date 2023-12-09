@@ -124,10 +124,22 @@ app.MapPost("/service/getByNameVersion", async ([FromBody] ByNameVersionBean bea
         Ok(MResponse.Successful(entity.Select(Service.FromEntity).ToArray()));
 }).WithName("GetServiceByNameVersion").WithOpenApi();
 
-app.MapPost("/service/addDependencies", async ([FromBody] List<DependencyDescription> bean, [FromServices] ServiceDbContext db) =>
+app.MapPost("/service/addDependencies", async (
+    [FromBody] List<DependencyDescription> bean, 
+    [FromServices] ServiceDbContext db,
+    [FromServices] ILogger<Program> logger)=>
 {
+    var @interfaces = db.Interfaces.Select(f => $"{f.ServiceId}::{f.IdSuffix}")
+    .ToHashSet();
+
     async Task _add(DependencyDescription depd)
     {
+        if(!interfaces.Contains(depd.Caller) ||
+           !interfaces.Contains(depd.Callee))
+        {
+            logger.LogWarning($"One of the interfaces not found: {depd.Caller}, {depd.Callee}");
+            return;
+        }
         var entity = new DependencyEntity();
         depd.CopyToEntity(entity);
         await db.Dependencies.AddAsync(entity);
