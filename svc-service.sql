@@ -9,16 +9,20 @@ START TRANSACTION;
 ALTER DATABASE CHARACTER SET utf8mb4;
 
 CREATE TABLE `Services` (
-    `Id` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `Id` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
+    `Name` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
     `Repo` varchar(128) CHARACTER SET utf8mb4 NOT NULL,
-    `VersionMajor` varchar(16) CHARACTER SET utf8mb4 NULL,
-    `VersionMinor` varchar(16) CHARACTER SET utf8mb4 NULL,
-    `VersionPatch` varchar(32) CHARACTER SET utf8mb4 NULL,
-    `IdleCpu` decimal(16,4) NULL,
-    `IdleRam` decimal(16,4) NULL,
-    `IdleDisk` decimal(16,4) NULL,
-    `IdleGpuCore` decimal(16,4) NULL,
-    `IdleGpuMem` decimal(16,4) NULL,
+    `ImageUrl` varchar(256) CHARACTER SET utf8mb4 NOT NULL,
+    `HasVersion` tinyint(1) NOT NULL,
+    `VersionMajor` varchar(16) CHARACTER SET utf8mb4 NOT NULL,
+    `VersionMinor` varchar(16) CHARACTER SET utf8mb4 NOT NULL,
+    `VersionPatch` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `HasIdleResource` tinyint(1) NOT NULL,
+    `IdleCpu` decimal(16,4) NOT NULL,
+    `IdleRam` decimal(16,4) NOT NULL,
+    `IdleDisk` decimal(16,4) NOT NULL,
+    `IdleGpuCore` decimal(16,4) NOT NULL,
+    `IdleGpuMem` decimal(16,4) NOT NULL,
     `DesiredCpu` decimal(16,4) NOT NULL,
     `DesiredRam` decimal(16,4) NOT NULL,
     `DesiredDisk` decimal(16,4) NOT NULL,
@@ -29,99 +33,21 @@ CREATE TABLE `Services` (
 ) CHARACTER SET=utf8mb4;
 
 CREATE TABLE `Interfaces` (
-    `ServiceId` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
-    `IdSuffix` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
-    `Path` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
-    `InputSize` int NOT NULL,
-    `OutputSize` varchar(50) CHARACTER SET utf8mb4 NOT NULL,
+    `ServiceId` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
+    `IdSuffix` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
+    `Path` varchar(128) CHARACTER SET utf8mb4 NOT NULL,
+    `InputSize` decimal(16,4) NOT NULL,
+    `OutputSize` decimal(16,4) NOT NULL,
+    `Info` varchar(256) CHARACTER SET utf8mb4 NOT NULL,
+    `Method` varchar(16) CHARACTER SET utf8mb4 NOT NULL,
     CONSTRAINT `PK_Interfaces` PRIMARY KEY (`ServiceId`, `IdSuffix`),
     CONSTRAINT `FK_Interfaces_Services_ServiceId` FOREIGN KEY (`ServiceId`) REFERENCES `Services` (`Id`) ON DELETE CASCADE
 ) CHARACTER SET=utf8mb4;
 
-INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20230504032049_init', '7.0.5');
-
-COMMIT;
-
-START TRANSACTION;
-
-ALTER TABLE `Services` ADD `Name` varchar(32) CHARACTER SET utf8mb4 NOT NULL DEFAULT '';
-
-CREATE INDEX `IX_Services_Name` ON `Services` (`Name`);
-
-INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20230507120625_AddServiceName', '7.0.5');
-
-COMMIT;
-
-START TRANSACTION;
-
-UPDATE `Services` SET `VersionPatch` = ''
-WHERE `VersionPatch` IS NULL;
-SELECT ROW_COUNT();
-
-
-ALTER TABLE `Services` MODIFY COLUMN `VersionPatch` varchar(32) CHARACTER SET utf8mb4 NOT NULL;
-
-UPDATE `Services` SET `VersionMinor` = ''
-WHERE `VersionMinor` IS NULL;
-SELECT ROW_COUNT();
-
-
-ALTER TABLE `Services` MODIFY COLUMN `VersionMinor` varchar(16) CHARACTER SET utf8mb4 NOT NULL;
-
-UPDATE `Services` SET `VersionMajor` = ''
-WHERE `VersionMajor` IS NULL;
-SELECT ROW_COUNT();
-
-
-ALTER TABLE `Services` MODIFY COLUMN `VersionMajor` varchar(16) CHARACTER SET utf8mb4 NOT NULL;
-
-ALTER TABLE `Services` MODIFY COLUMN `IdleRam` decimal(16,4) NOT NULL DEFAULT 0.0;
-
-ALTER TABLE `Services` MODIFY COLUMN `IdleGpuMem` decimal(16,4) NOT NULL DEFAULT 0.0;
-
-ALTER TABLE `Services` MODIFY COLUMN `IdleGpuCore` decimal(16,4) NOT NULL DEFAULT 0.0;
-
-ALTER TABLE `Services` MODIFY COLUMN `IdleDisk` decimal(16,4) NOT NULL DEFAULT 0.0;
-
-ALTER TABLE `Services` MODIFY COLUMN `IdleCpu` decimal(16,4) NOT NULL DEFAULT 0.0;
-
-ALTER TABLE `Services` MODIFY COLUMN `DesiredCpu` decimal(65,30) NOT NULL;
-
-ALTER TABLE `Services` ADD `HasIdleResource` tinyint(1) NOT NULL DEFAULT FALSE;
-
-ALTER TABLE `Services` ADD `HasVersion` tinyint(1) NOT NULL DEFAULT FALSE;
-
-INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20230508042542_hasPropInsteadOfNullable', '7.0.5');
-
-COMMIT;
-
-START TRANSACTION;
-
-INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20230508045228_fixDesiredCpuPrecision', '7.0.5');
-
-COMMIT;
-
-START TRANSACTION;
-
-ALTER TABLE `Services` MODIFY COLUMN `DesiredCpu` decimal(16,4) NOT NULL;
-
-ALTER TABLE `Services` ADD `ImageUrl` varchar(256) CHARACTER SET utf8mb4 NOT NULL DEFAULT '';
-
-INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20230515051450_addImageUrlforServiceEntity', '7.0.5');
-
-COMMIT;
-
-START TRANSACTION;
-
 CREATE TABLE `Dependencies` (
-    `CallerServiceId` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `CallerServiceId` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
     `CallerIdSuffix` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
-    `CalleeServiceId` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `CalleeServiceId` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
     `CalleeIdSuffix` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
     `SerilizedData` varchar(4096) CHARACTER SET utf8mb4 NOT NULL,
     CONSTRAINT `PK_Dependencies` PRIMARY KEY (`CallerServiceId`, `CallerIdSuffix`, `CalleeServiceId`, `CalleeIdSuffix`),
@@ -133,8 +59,33 @@ CREATE TABLE `Dependencies` (
 
 CREATE INDEX `IX_Dependencies_CalleeServiceId_CalleeIdSuffix` ON `Dependencies` (`CalleeServiceId`, `CalleeIdSuffix`);
 
+CREATE INDEX `IX_Services_Name` ON `Services` (`Name`);
+
 INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20230804063422_Dependency', '7.0.5');
+VALUES ('20231016071036_ReInit', '7.0.5');
+
+COMMIT;
+
+START TRANSACTION;
+
+ALTER TABLE `Services` MODIFY COLUMN `Name` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
+
+ALTER TABLE `Services` MODIFY COLUMN `Id` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
+
+ALTER TABLE `Interfaces` MODIFY COLUMN `IdSuffix` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
+
+ALTER TABLE `Interfaces` MODIFY COLUMN `ServiceId` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
+
+ALTER TABLE `Dependencies` MODIFY COLUMN `CalleeIdSuffix` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
+
+ALTER TABLE `Dependencies` MODIFY COLUMN `CalleeServiceId` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
+
+ALTER TABLE `Dependencies` MODIFY COLUMN `CallerIdSuffix` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
+
+ALTER TABLE `Dependencies` MODIFY COLUMN `CallerServiceId` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
+
+INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
+VALUES ('20231209071035_ExtendFieldLength', '7.0.5');
 
 COMMIT;
 
