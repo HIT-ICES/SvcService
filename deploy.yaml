@@ -91,6 +91,7 @@ spec:
     spec:
       containers:
         - image: $IMG_REPO/$SVC_NAME:$IMG_TAG # change this to the desired image if needed
+          imagePullPolicy: Always
           name: $SVC_NAME # change this to the desired name if needed
           env:
             - name: MYSQL_UID

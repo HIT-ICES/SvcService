@@ -102,6 +102,31 @@ app.MapPost
 
 app.MapPost
     (
+        "service/delete",
+        async ([FromBody] ByServiceIdsBean bean, [FromServices] ServiceDbContext db) =>
+        {
+            if (bean.Fuzzy)
+            {
+                if (bean.ServiceIds.Length != 1)
+                    return BadRequest(MResponse.Failed("Too much/few fuzzy Ids, exact ONE is required."));
+                return await db.Services.Where
+                                    (s => EF.Functions.Like(s.Id, $"%{bean.ServiceIds[0]}%"))
+                               .DeleteFromQueryAsync()
+                    >= 1
+                           ? Ok(MResponse.Successful())
+                           : NotFound(MResponse.Failed($"Service with Id {bean.ServiceIds[0]} not found"));
+            }
+
+            await db.Services.Where(s => bean.ServiceIds.Contains(s.Id)).DeleteFromQueryAsync();
+            return Ok(MResponse.Successful());
+        }
+    )
+   .WithName("DeleteService")
+   .WithDescription("Delete Services. If use fuzzy, only ONE id is acceptable")
+   .WithOpenApi();
+
+app.MapPost
+    (
         "service/getById",
         async ([FromBody] ByServiceIdBean bean, [FromServices] ServiceDbContext db) =>
         {
@@ -388,18 +413,22 @@ app.Run();
 
 namespace SvcService
 {
-    public record ByServiceIdBean(string ServiceId);
+    [Serializable] public record ByServiceIdBean(string ServiceId);
 
+    [Serializable] public record ByServiceIdsBean(string[] ServiceIds, bool Fuzzy = false);
+
+    [Serializable]
     public record ByInterfaceIdBean(string Id)
     {
         public string IdSuffix => Id.Split("::")[1];
         public string ServiceId => Id.Split("::")[0];
     }
 
-    public record ByNameVersionBean(string Name, Version? Version);
+    [Serializable] public record ByNameVersionBean(string Name, Version? Version);
 
-    public record Version(string Major, string Minor, string Patch);
+    [Serializable] public record Version(string Major, string Minor, string Patch);
 
+    [Serializable]
     public record Interface(string Id, string Path, decimal InputSize, decimal OutputSize, string Method, string Info)
     {
         public InterfaceEntity ToEntity(string serviceName)
@@ -421,9 +450,11 @@ namespace SvcService
         }
     }
 
-    public record Resource(decimal Cpu, decimal Ram, decimal Disk, decimal GpuCore, decimal GpuMem);
+    [Serializable] public record Resource(decimal Cpu, decimal Ram, decimal Disk, decimal GpuCore, decimal GpuMem);
 
-    public record Service(
+    [Serializable]
+    public record Service
+    (
         string Id,
         string Name,
         string Repo,
@@ -432,7 +463,8 @@ namespace SvcService
         List<Interface> Interfaces,
         Resource? IdleResource,
         Resource DesiredResource,
-        int DesiredCapability)
+        int DesiredCapability
+    )
     {
         public void CopyToEntity(ServiceEntity entity)
         {
@@ -464,19 +496,23 @@ namespace SvcService
         }
     }
 
+    [Serializable]
     public record DependencyServiceDetail(string Name, string Repo, string ImageUrl, Version? Version)
     {
         public static DependencyServiceDetail FromEntity(ServiceEntity entity)
             => new(entity.Name, entity.Repo, entity.ImageUrl, entity.Version);
     }
 
-    public record DetailedDependencyDescription(
+    [Serializable]
+    public record DetailedDependencyDescription
+    (
         string Caller,
         string CallerPath,
         string Callee,
         string CalleePath,
         DependencyServiceDetail CalleeServiceDetail,
-        JsonElement ExtraData)
+        JsonElement ExtraData
+    )
         : DependencyDescription(Caller, Callee, ExtraData)
     {
         public static DetailedDependencyDescription FromEntity(DependencyEntity entity)
@@ -491,6 +527,7 @@ namespace SvcService
             );
     }
 
+    [Serializable]
     public record DependencyDescription(string Caller, string Callee, JsonElement ExtraData)
     {
         public void CopyToEntity(DependencyEntity entity)
@@ -509,13 +546,16 @@ namespace SvcService
             );
     }
 
-    public record AutoTraceDependencyDescription(
+    [Serializable]
+    public record AutoTraceDependencyDescription
+    (
         string CallerService,
         string CallerInterface,
         string CalleeService,
         string CalleeInterface,
         decimal RequestSize,
-        decimal ResponseSize)
+        decimal ResponseSize
+    )
     {
         public void CopyToEntity(DependencyEntity entity)
         {
@@ -531,10 +571,13 @@ namespace SvcService
         }
     }
 
-    public record InterfaceDependencyGraphNode(string Caller, Dictionary<string, JsonElement> Callees);
+    [Serializable] public record InterfaceDependencyGraphNode(string Caller, Dictionary<string, JsonElement> Callees);
 
-    public record ServiceDependencyGraphNode(
+    [Serializable]
+    public record ServiceDependencyGraphNode
+    (
         string Caller,
         DependencyServiceDetail CallerDetail,
-        Dictionary<string, DetailedDependencyDescription[]> Callees);
+        Dictionary<string, DetailedDependencyDescription[]> Callees
+    );
 }
