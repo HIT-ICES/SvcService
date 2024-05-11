@@ -102,7 +102,7 @@ app.MapPost
 
 app.MapPost
     (
-        "service/delete",
+        "service/advancedDelete",
         async ([FromBody] ByServiceIdsBean bean, [FromServices] ServiceDbContext db) =>
         {
             if (bean.Fuzzy)
