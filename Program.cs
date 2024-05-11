@@ -121,7 +121,7 @@ app.MapPost
             return Ok(MResponse.Successful());
         }
     )
-   .WithName("DeleteService")
+   .WithName("Batch OR Fuzzy Delete Service")
    .WithDescription("Delete Services. If use fuzzy, only ONE id is acceptable")
    .WithOpenApi();
 
