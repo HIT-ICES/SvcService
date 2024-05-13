@@ -210,6 +210,7 @@ app.MapPost
 
                 var entity = new DependencyEntity();
                 depd.CopyToEntity(entity);
+                if (await db.Dependencies.ContainsAsync(entity)) return;
                 await db.Dependencies.AddAsync(entity);
             }
 
