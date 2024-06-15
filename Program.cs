@@ -122,12 +122,11 @@ app.MapPost
         "service/delete",
         async ([FromBody] ByServiceIdBean bean, [FromServices] ServiceDbContext db) =>
         {
-            return Ok
-            (
+            return
                 await db.Services.Where(s => s.Id == bean.ServiceId).DeleteFromQueryAsync() >= 1
-                    ? MResponse.Successful()
-                    : MResponse.Failed($"Service with Id {bean.ServiceId} not found")
-            );
+                    ? Ok(MResponse.Successful())
+                    : NotFound(MResponse.Failed($"Service with Id {bean.ServiceId} not found"))
+            ;
         }
     )
    .WithName("DeleteService")
@@ -167,9 +166,7 @@ app.MapPost
                                  .Include(s => s.Interfaces)
                                  .Where(s => EF.Functions.Like(s.Id, $"%{bean.ServiceId}%"))
                                  .ToArrayAsync();
-            return entity.Length == 0
-                       ? Ok(MResponse.Failed($"Service with Id {bean.ServiceId} not found"))
-                       : Ok(MResponse.Successful(entity.Select(Service.FromEntity).ToArray()));
+            return Ok(MResponse.Successful(entity.Select(Service.FromEntity).ToArray()));
         }
     )
    .WithName("GetServiceById")
@@ -185,7 +182,7 @@ app.MapPost
                                  .Where(s => s.Id == bean.ServiceId)
                                  .ToArrayAsync();
             return entity.Length == 0
-                       ? Ok(MResponse.Failed($"Service with Id {bean.ServiceId} not found"))
+                       ? NotFound(MResponse.Failed($"Service with Id {bean.ServiceId} not found"))
                        : Ok(MResponse.Successful(entity.Select(Service.FromEntity).ToArray()));
         }
     )
@@ -213,7 +210,7 @@ app.MapPost
                                               && EF.Functions.Like(s.VersionPatch, $"%{bean.Version.Patch}%")
                                          )).ToArrayAsync();
             return entity.Length == 0
-                       ? Ok(MResponse.Failed($"Service with Name {bean.Name} and Version {bean.Version} not found"))
+                       ? NotFound(MResponse.Failed($"Service with Name {bean.Name} and Version {bean.Version} not found"))
                        : Ok(MResponse.Successful(entity.Select(Service.FromEntity).ToArray()));
         }
     )
