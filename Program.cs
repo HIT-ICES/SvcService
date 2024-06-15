@@ -8,6 +8,7 @@ using static Microsoft.AspNetCore.Http.Results;
 using System.Text.Json;
 using Steeltoe.Extensions.Configuration;
 using System.Globalization;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,7 +57,27 @@ app.MapPost
         async ([FromBody] Service service, [FromServices] ServiceDbContext db) =>
         {
             var serviceEntity = new ServiceEntity();
+            if (!service.Valid)
+                return BadRequest
+                (
+                    new
+                    {
+                        Message="Format of service is not correct",
+                        Data = service
+                    }
+                );
             service.CopyToEntity(serviceEntity);
+            if (await db.Services.ContainsAsync(serviceEntity))
+            {
+                return Conflict
+                (
+                    new
+                    {
+                        Message = $"Service with id {service.Id} already exists",
+                        Data = service
+                    }
+                );
+            }
             await db.Services.AddAsync(serviceEntity);
             await db.SaveChangesAsync();
             return Ok(MResponse.Successful());
@@ -70,6 +91,15 @@ app.MapPost
         "/service/update",
         async ([FromBody] Service service, [FromServices] ServiceDbContext db) =>
         {
+            if (!service.Valid)
+                return BadRequest
+                (
+                    new
+                    {
+                        Message="Format of service is not correct",
+                        Data = service
+                    }
+                );
             var t = await db.Services.Include(s => s.Interfaces)
                             .AsTracking()
                             .FirstOrDefaultAsync(s => s.Id == service.Id);
@@ -435,6 +465,12 @@ namespace SvcService
     [Serializable]
     public record Interface(string Id, string Path, decimal InputSize, decimal OutputSize, string Method, string Info)
     {
+        [JsonIgnore]
+        public bool Valid =>
+            !string.IsNullOrEmpty(Path)
+         && !string.IsNullOrEmpty(Method)
+         && !string.IsNullOrEmpty(Id);
+
         public InterfaceEntity ToEntity(string serviceName)
         {
             return new()
@@ -470,6 +506,11 @@ namespace SvcService
         int DesiredCapability
     )
     {
+        [JsonIgnore]
+        public bool Valid =>
+            !string.IsNullOrEmpty(Id)
+         && !string.IsNullOrEmpty(Name)
+         && Interfaces.All(i => i.Valid);
         public void CopyToEntity(ServiceEntity entity)
         {
             entity.Id = Id;
