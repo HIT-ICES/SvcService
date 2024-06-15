@@ -59,7 +59,7 @@ app.MapPost
             service.CopyToEntity(serviceEntity);
             await db.Services.AddAsync(serviceEntity);
             await db.SaveChangesAsync();
-            return MResponse.Successful();
+            return Ok(MResponse.Successful());
         }
     )
    .WithName("AddService")
@@ -73,7 +73,7 @@ app.MapPost
             var t = await db.Services.Include(s => s.Interfaces)
                             .AsTracking()
                             .FirstOrDefaultAsync(s => s.Id == service.Id);
-            if (t is null) return MResponse.Failed($"Service with Id {service.Id} not found");
+            if (t is null) return NotFound(MResponse.Failed($"Service with Id {service.Id} not found"));
             foreach (var oldInterface in t.Interfaces)
             {
                 db.Entry(oldInterface).State = EntityState.Detached;
@@ -81,7 +81,7 @@ app.MapPost
 
             service.CopyToEntity(t);
             await db.SaveChangesAsync();
-            return MResponse.Successful();
+            return Ok(MResponse.Successful());
         }
     )
    .WithName("UpdateService")
@@ -92,9 +92,12 @@ app.MapPost
         "service/delete",
         async ([FromBody] ByServiceIdBean bean, [FromServices] ServiceDbContext db) =>
         {
-            return await db.Services.Where(s => s.Id == bean.ServiceId).DeleteFromQueryAsync() >= 1
-                       ? MResponse.Successful()
-                       : MResponse.Failed($"Service with Id {bean.ServiceId} not found");
+            return Ok
+            (
+                await db.Services.Where(s => s.Id == bean.ServiceId).DeleteFromQueryAsync() >= 1
+                    ? MResponse.Successful()
+                    : MResponse.Failed($"Service with Id {bean.ServiceId} not found")
+            );
         }
     )
    .WithName("DeleteService")
