@@ -9,6 +9,7 @@ using System.Text.Json;
 using Steeltoe.Extensions.Configuration;
 using System.Globalization;
 using System.Text.Json.Serialization;
+using Microsoft.OpenApi.Readers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +35,8 @@ builder.Services
         (
             opt => { opt.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)); }
         );
+builder.Services.AddLogging();
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
@@ -62,7 +65,7 @@ app.MapPost
                 (
                     new
                     {
-                        Message="Format of service is not correct",
+                        Message = "Format of service is not correct",
                         Data = service
                     }
                 );
@@ -78,12 +81,72 @@ app.MapPost
                     }
                 );
             }
+
             await db.Services.AddAsync(serviceEntity);
             await db.SaveChangesAsync();
             return Ok(MResponse.Successful());
         }
     )
    .WithName("AddService")
+   .WithOpenApi();
+
+app.MapPost
+    (
+        "/service/autoAdd",
+        async
+        (
+            [FromBody] ServicePrototype servicePrototype,
+            [FromServices] ServiceDbContext db,
+            [FromServices] HttpClient http,
+            [FromServices] ILogger<Program> logger
+        ) =>
+        {
+            List<Interface> interfaces = [];
+            try
+            {
+                interfaces = await getApis(logger, http, new(servicePrototype.SwaggerUrl));
+                if (interfaces.Count == 0) throw new ApplicationException();
+            }
+            catch (Exception)
+            {
+                return Problem
+                (
+                    detail: $"Failed to get interfaces for swagger '{servicePrototype.SwaggerUrl}, or interfaces is []'",
+
+                    statusCode: 503
+                );
+            }
+
+            var service = servicePrototype.ToService(interfaces);
+            var serviceEntity = new ServiceEntity();
+            if (!service.Valid)
+                return BadRequest
+                (
+                    new
+                    {
+                        Message = "Format of service is not correct",
+                        Data = service
+                    }
+                );
+            service.CopyToEntity(serviceEntity);
+            if (await db.Services.ContainsAsync(serviceEntity))
+            {
+                return Conflict
+                (
+                    new
+                    {
+                        Message = $"Service with id {service.Id} already exists",
+                        Data = service
+                    }
+                );
+            }
+
+            await db.Services.AddAsync(serviceEntity);
+            await db.SaveChangesAsync();
+            return Ok(MResponse.Successful());
+        }
+    )
+   .WithName("AddServiceUsingSwagger")
    .WithOpenApi();
 
 app.MapPost
@@ -96,7 +159,7 @@ app.MapPost
                 (
                     new
                     {
-                        Message="Format of service is not correct",
+                        Message = "Format of service is not correct",
                         Data = service
                     }
                 );
@@ -126,7 +189,7 @@ app.MapPost
                 await db.Services.Where(s => s.Id == bean.ServiceId).DeleteFromQueryAsync() >= 1
                     ? Ok(MResponse.Successful())
                     : NotFound(MResponse.Failed($"Service with Id {bean.ServiceId} not found"))
-            ;
+                ;
         }
     )
    .WithName("DeleteService")
@@ -210,7 +273,8 @@ app.MapPost
                                               && EF.Functions.Like(s.VersionPatch, $"%{bean.Version.Patch}%")
                                          )).ToArrayAsync();
             return entity.Length == 0
-                       ? NotFound(MResponse.Failed($"Service with Name {bean.Name} and Version {bean.Version} not found"))
+                       ? NotFound
+                           (MResponse.Failed($"Service with Name {bean.Name} and Version {bean.Version} not found"))
                        : Ok(MResponse.Successful(entity.Select(Service.FromEntity).ToArray()));
         }
     )
@@ -442,6 +506,52 @@ app.MapPost
 
 app.Run();
 
+return;
+
+async Task<List<Interface>> getApis(ILogger logger, HttpClient http, Uri url)
+{
+    List<Interface> ret = new();
+    var response = await http.GetAsync(url);
+    if (!response.IsSuccessStatusCode)
+    {
+        logger.LogWarning("Failed to fetch apis from {url}", url);
+        return ret;
+    }
+
+
+    // Read V3 as YAML
+    try
+    {
+        var openApiDocument = new OpenApiStreamReader().Read
+        (
+            await response.Content.ReadAsStreamAsync(),
+            out _
+        );
+
+        foreach (var (path, info) in openApiDocument.Paths)
+        {
+            var ppath = path.Split("{")[0];
+            ret.AddRange
+            (
+                info.Operations.Select
+                (
+                    kv =>
+                        new Interface
+                            ($"{ppath}:{Enum.GetName(kv.Key)}", ppath, 0, 0, Enum.GetName(kv.Key), kv.Value.Summary)
+                )
+            );
+        }
+
+        logger.LogInformation("Successfully retrieved {apiCount} apis from {url}", ret.Count, url);
+        return ret;
+    }
+    catch (Exception)
+    {
+        logger.LogWarning("Failed to fetch apis from {url}", url);
+        return ret;
+    }
+}
+
 namespace SvcService
 {
     [Serializable] public record ByServiceIdBean(string ServiceId);
@@ -490,6 +600,25 @@ namespace SvcService
     [Serializable] public record Resource(decimal Cpu, decimal Ram, decimal Disk, decimal GpuCore, decimal GpuMem);
 
     [Serializable]
+    public record ServicePrototype
+    (
+        string Id,
+        string Name,
+        string Repo,
+        string ImageUrl,
+        Version? Version,
+        string SwaggerUrl,
+        Resource? IdleResource,
+        Resource DesiredResource,
+        int DesiredCapability
+    )
+    {
+        public Service ToService(List<Interface> interfaces)
+            => new Service
+                (Id, Name, Repo, ImageUrl, Version, interfaces, IdleResource, DesiredResource, DesiredCapability);
+    }
+
+    [Serializable]
     public record Service
     (
         string Id,
@@ -508,6 +637,7 @@ namespace SvcService
             !string.IsNullOrEmpty(Id)
          && !string.IsNullOrEmpty(Name)
          && Interfaces.All(i => i.Valid);
+
         public void CopyToEntity(ServiceEntity entity)
         {
             entity.Id = Id;
