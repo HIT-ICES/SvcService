@@ -111,13 +111,16 @@ app.MapPost
             {
                 return Problem
                 (
-                    detail: $"Failed to get interfaces for swagger '{servicePrototype.SwaggerUrl}, or interfaces is []'",
-
+                    detail:
+                    $"Failed to get interfaces for swagger '{servicePrototype.SwaggerUrl}, or interfaces is []'",
                     statusCode: 502
                 );
             }
 
+            logger.LogInformation("Successfully retrieved {0} interfaces", interfaces?.Count ?? -1);
+            Console.WriteLine(JsonSerializer.Serialize(interfaces));
             var service = servicePrototype.ToService(interfaces);
+            Console.WriteLine(JsonSerializer.Serialize(service));
             var serviceEntity = new ServiceEntity();
             if (!service.Valid)
                 return BadRequest
@@ -537,7 +540,14 @@ async Task<List<Interface>> getApis(ILogger logger, HttpClient http, Uri url)
                 (
                     kv =>
                         new Interface
-                            ($"{ppath}:{Enum.GetName(kv.Key)}", ppath, 0, 0, Enum.GetName(kv.Key)??"Unknown", kv.Value.Summary??"")
+                        (
+                            $"{ppath}:{Enum.GetName(kv.Key)}",
+                            ppath,
+                            0,
+                            0,
+                            Enum.GetName(kv.Key) ?? "Unknown",
+                            kv.Value.Summary ?? ""
+                        )
                 )
             );
         }
