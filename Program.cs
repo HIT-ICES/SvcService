@@ -105,7 +105,7 @@ app.MapPost
             try
             {
                 interfaces = await getApis(logger, http, new(servicePrototype.SwaggerUrl));
-                if (interfaces.Count == 0) throw new ApplicationException();
+                if (interfaces is null or []) throw new ApplicationException();
             }
             catch (Exception)
             {
@@ -113,7 +113,7 @@ app.MapPost
                 (
                     detail: $"Failed to get interfaces for swagger '{servicePrototype.SwaggerUrl}, or interfaces is []'",
 
-                    statusCode: 503
+                    statusCode: 502
                 );
             }
 
@@ -636,7 +636,7 @@ namespace SvcService
         public bool Valid =>
             !string.IsNullOrEmpty(Id)
          && !string.IsNullOrEmpty(Name)
-         && Interfaces.All(i => i.Valid);
+         && (Interfaces?.All(i => i.Valid) ?? false);
 
         public void CopyToEntity(ServiceEntity entity)
         {
