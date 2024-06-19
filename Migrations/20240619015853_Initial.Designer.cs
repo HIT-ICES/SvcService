@@ -10,8 +10,8 @@ using SvcService.Data;
 namespace SvcService.Migrations
 {
     [DbContext(typeof(ServiceDbContext))]
-    [Migration("20231209071035_ExtendFieldLength")]
-    partial class ExtendFieldLength
+    [Migration("20240619015853_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

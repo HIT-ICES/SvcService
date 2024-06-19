@@ -9,8 +9,8 @@ START TRANSACTION;
 ALTER DATABASE CHARACTER SET utf8mb4;
 
 CREATE TABLE `Services` (
-    `Id` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
-    `Name` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
+    `Id` varchar(128) CHARACTER SET utf8mb4 NOT NULL,
+    `Name` varchar(128) CHARACTER SET utf8mb4 NOT NULL,
     `Repo` varchar(128) CHARACTER SET utf8mb4 NOT NULL,
     `ImageUrl` varchar(256) CHARACTER SET utf8mb4 NOT NULL,
     `HasVersion` tinyint(1) NOT NULL,
@@ -33,8 +33,8 @@ CREATE TABLE `Services` (
 ) CHARACTER SET=utf8mb4;
 
 CREATE TABLE `Interfaces` (
-    `ServiceId` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
-    `IdSuffix` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
+    `ServiceId` varchar(128) CHARACTER SET utf8mb4 NOT NULL,
+    `IdSuffix` varchar(128) CHARACTER SET utf8mb4 NOT NULL,
     `Path` varchar(128) CHARACTER SET utf8mb4 NOT NULL,
     `InputSize` decimal(16,4) NOT NULL,
     `OutputSize` decimal(16,4) NOT NULL,
@@ -45,10 +45,10 @@ CREATE TABLE `Interfaces` (
 ) CHARACTER SET=utf8mb4;
 
 CREATE TABLE `Dependencies` (
-    `CallerServiceId` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
-    `CallerIdSuffix` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
-    `CalleeServiceId` varchar(64) CHARACTER SET utf8mb4 NOT NULL,
-    `CalleeIdSuffix` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+    `CallerServiceId` varchar(128) CHARACTER SET utf8mb4 NOT NULL,
+    `CallerIdSuffix` varchar(128) CHARACTER SET utf8mb4 NOT NULL,
+    `CalleeServiceId` varchar(128) CHARACTER SET utf8mb4 NOT NULL,
+    `CalleeIdSuffix` varchar(128) CHARACTER SET utf8mb4 NOT NULL,
     `SerilizedData` varchar(4096) CHARACTER SET utf8mb4 NOT NULL,
     CONSTRAINT `PK_Dependencies` PRIMARY KEY (`CallerServiceId`, `CallerIdSuffix`, `CalleeServiceId`, `CalleeIdSuffix`),
     CONSTRAINT `FK_Dependencies_Interfaces_CalleeServiceId_CalleeIdSuffix` FOREIGN KEY (`CalleeServiceId`, `CalleeIdSuffix`) REFERENCES `Interfaces` (`ServiceId`, `IdSuffix`) ON DELETE CASCADE,
@@ -62,30 +62,7 @@ CREATE INDEX `IX_Dependencies_CalleeServiceId_CalleeIdSuffix` ON `Dependencies` 
 CREATE INDEX `IX_Services_Name` ON `Services` (`Name`);
 
 INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20231016071036_ReInit', '7.0.5');
-
-COMMIT;
-
-START TRANSACTION;
-
-ALTER TABLE `Services` MODIFY COLUMN `Name` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
-
-ALTER TABLE `Services` MODIFY COLUMN `Id` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
-
-ALTER TABLE `Interfaces` MODIFY COLUMN `IdSuffix` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
-
-ALTER TABLE `Interfaces` MODIFY COLUMN `ServiceId` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
-
-ALTER TABLE `Dependencies` MODIFY COLUMN `CalleeIdSuffix` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
-
-ALTER TABLE `Dependencies` MODIFY COLUMN `CalleeServiceId` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
-
-ALTER TABLE `Dependencies` MODIFY COLUMN `CallerIdSuffix` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
-
-ALTER TABLE `Dependencies` MODIFY COLUMN `CallerServiceId` varchar(128) CHARACTER SET utf8mb4 NOT NULL;
-
-INSERT INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-VALUES ('20231209071035_ExtendFieldLength', '7.0.5');
+VALUES ('20240619015853_Initial', '7.0.5');
 
 COMMIT;
 

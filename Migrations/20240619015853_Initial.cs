@@ -5,7 +5,7 @@
 namespace SvcService.Migrations
 {
     /// <inheritdoc />
-    public partial class ReInit : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,9 +17,9 @@ namespace SvcService.Migrations
                 name: "Services",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false)
+                    Id = table.Column<string>(type: "varchar(128)", maxLength: 128, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Name = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false)
+                    Name = table.Column<string>(type: "varchar(128)", maxLength: 128, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Repo = table.Column<string>(type: "varchar(128)", maxLength: 128, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -55,9 +55,9 @@ namespace SvcService.Migrations
                 name: "Interfaces",
                 columns: table => new
                 {
-                    ServiceId = table.Column<string>(type: "varchar(64)", nullable: false)
+                    ServiceId = table.Column<string>(type: "varchar(128)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    IdSuffix = table.Column<string>(type: "varchar(64)", maxLength: 64, nullable: false)
+                    IdSuffix = table.Column<string>(type: "varchar(128)", maxLength: 128, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Path = table.Column<string>(type: "varchar(128)", maxLength: 128, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -84,13 +84,13 @@ namespace SvcService.Migrations
                 name: "Dependencies",
                 columns: table => new
                 {
-                    CallerServiceId = table.Column<string>(type: "varchar(64)", nullable: false)
+                    CallerServiceId = table.Column<string>(type: "varchar(128)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    CallerIdSuffix = table.Column<string>(type: "varchar(32)", maxLength: 32, nullable: false)
+                    CallerIdSuffix = table.Column<string>(type: "varchar(128)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    CalleeServiceId = table.Column<string>(type: "varchar(64)", nullable: false)
+                    CalleeServiceId = table.Column<string>(type: "varchar(128)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    CalleeIdSuffix = table.Column<string>(type: "varchar(32)", maxLength: 32, nullable: false)
+                    CalleeIdSuffix = table.Column<string>(type: "varchar(128)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     SerilizedData = table.Column<string>(type: "varchar(4096)", maxLength: 4096, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")

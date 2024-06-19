@@ -537,7 +537,7 @@ async Task<List<Interface>> getApis(ILogger logger, HttpClient http, Uri url)
                 (
                     kv =>
                         new Interface
-                            ($"{ppath}:{Enum.GetName(kv.Key)}", ppath, 0, 0, Enum.GetName(kv.Key), kv.Value.Summary)
+                            ($"{ppath}:{Enum.GetName(kv.Key)}", ppath, 0, 0, Enum.GetName(kv.Key)??"Unknown", kv.Value.Summary??"")
                 )
             );
         }
