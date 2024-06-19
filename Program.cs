@@ -117,10 +117,8 @@ app.MapPost
                 );
             }
 
-            logger.LogInformation("Successfully retrieved {0} interfaces", interfaces?.Count ?? -1);
-            Console.WriteLine(JsonSerializer.Serialize(interfaces));
             var service = servicePrototype.ToService(interfaces);
-            Console.WriteLine(JsonSerializer.Serialize(service));
+
             var serviceEntity = new ServiceEntity();
             if (!service.Valid)
                 return BadRequest
